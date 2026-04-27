@@ -17,7 +17,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { getPerfil, actualizarPerfil, updatePassword } from '../../services/api';
+import { getPerfil, actualizarPerfil } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { cn } from '../../lib/utils';
 import AvatarUpload from '../../components/cuenta/AvatarUpload';

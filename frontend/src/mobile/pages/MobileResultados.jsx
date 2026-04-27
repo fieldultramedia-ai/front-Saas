@@ -11,7 +11,6 @@ import {
   Clock,
   ArrowRight,
   FileText,
-  Instagram,
   Video,
   Layout
 } from 'lucide-react';
@@ -24,7 +23,7 @@ const MobileResultados = () => {
   const [progress, setProgress] = useState(0);
   const [itemsStatus, setItemsStatus] = useState([
     { id: 'pdf', label: 'PDF Profesional', icon: FileText, progress: 0, status: 'loading', color: '#00d4ff' },
-    { id: 'post', label: 'Instagram Post', icon: Instagram, progress: 0, status: 'pending', color: '#ff0055' },
+    { id: 'post', label: 'Instagram Post', icon: Share2, progress: 0, status: 'pending', color: '#ff0055' },
     { id: 'story', label: 'Instagram Story', icon: Layout, progress: 0, status: 'pending', color: '#ffcc00' },
     { id: 'video', label: 'Video Reel IA', icon: Video, progress: 0, status: 'pending', color: '#00ff88' },
   ]);
