@@ -25,6 +25,7 @@ import SelectPlanPage from './pages/SelectPlanPage';
 import RecuperarPasswordPage from './pages/RecuperarPasswordPage';
 import PagoExitosoPage from './pages/PagoExitosoPage';
 import PagoFallidoPage from './pages/PagoFallidoPage';
+import TerminosPage    from './pages/TerminosPage';
 
 // Componente de ruta protegida
 function ProtectedRoute({ children }) {
@@ -137,6 +138,7 @@ function AppContent() {
         <Route path="/pago-exitoso" element={<ProtectedRoute><PagoExitosoPage /></ProtectedRoute>} />
         <Route path="/pago-fallido" element={<ProtectedRoute><PagoFallidoPage /></ProtectedRoute>} />
         <Route path="/pago-pendiente" element={<ProtectedRoute><PagoExitosoPage /></ProtectedRoute>} />
+        <Route path="/terminos"       element={<TerminosPage />} />
 
         {/* Selección de Plan (Protegida) */}
         <Route path="/select-plan" element={<ProtectedRoute><SelectPlanPage /></ProtectedRoute>} />

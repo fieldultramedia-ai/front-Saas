@@ -57,9 +57,9 @@ export function ProfileDropdown({
         },
         {
             label: "Terms & Policies",
-            href: "#",
+            href: "/terminos",
             icon: <FileText className="w-4 h-4" />,
-            external: true,
+            isInternal: true,
         },
     ];
 

@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 export default function FooterSection() {
   return (
     <footer className="bg-[#0a0e17] py-10 sm:py-14 md:py-20 px-4 sm:px-6 md:px-8 border-t border-white/5">
@@ -9,15 +11,21 @@ export default function FooterSection() {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 sm:gap-10 md:gap-12">
             {[
-              { title: 'Producto', links: ['Funciones', 'Formatos', 'Precios'] },
-              { title: 'Empresa', links: ['Nosotros', 'Blog', 'Carreras'] },
-              { title: 'Legal', links: ['Privacy Policy', 'Terms of Service', 'Status'] },
+              { title: 'Producto', links: [{ name: 'Funciones', href: '#' }, { name: 'Formatos', href: '#' }, { name: 'Precios', href: '#' }] },
+              { title: 'Empresa', links: [{ name: 'Nosotros', href: '#' }, { name: 'Blog', href: '#' }, { name: 'Carreras', href: '#' }] },
+              { title: 'Legal', links: [{ name: 'Privacy Policy', href: '/terminos' }, { name: 'Terms of Service', href: '/terminos' }, { name: 'Status', href: '#' }] },
             ].map((col, i) => (
               <div key={i}>
                 <h5 className="text-white text-xs font-label uppercase tracking-widest mb-6">{col.title}</h5>
                 <ul className="space-y-4 text-sm text-slate-500">
                   {col.links.map((l, j) => (
-                    <li key={j}><a className="hover:text-[#00D4FF] transition-colors" href="#">{l}</a></li>
+                    <li key={j}>
+                      {l.href.startsWith('/') ? (
+                        <Link className="hover:text-[#00D4FF] transition-colors" to={l.href}>{l.name}</Link>
+                      ) : (
+                        <a className="hover:text-[#00D4FF] transition-colors" href={l.href}>{l.name}</a>
+                      )}
+                    </li>
                   ))}
                 </ul>
               </div>
