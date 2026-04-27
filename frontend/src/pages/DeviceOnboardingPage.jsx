@@ -1,0 +1,789 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Monitor, Smartphone, RotateCcw, Globe, Download, ArrowLeft } from 'lucide-react';
+import Iridescence from '../components/ui/Iridescence';
+import Logo from '../components/Logo';
+
+/* ============================================
+   DEVICE ONBOARDING PAGE
+   Step 1: Choose PC or Mobile
+   Step 2 (mobile only): Rotate to landscape
+   ============================================ */
+
+const IRIDESCENCE_COLOR = [0.0, 0.6, 0.8];
+
+export default function DeviceOnboardingPage() {
+  const navigate = useNavigate();
+  const [selected, setSelected] = useState(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [showContent, setShowContent] = useState(false);
+  const [step, setStep] = useState('select'); // 'select' | 'mobile-options' | 'rotate' | 'intro'
+  const [isLandscape, setIsLandscape] = useState(false);
+  
+  // Responsive detection
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isLandscapeShort, setIsLandscapeShort] = useState(window.innerHeight < 500);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      setIsLandscapeShort(window.innerHeight < 500);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowContent(true), 400);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Listen for orientation changes when on rotate step
+  useEffect(() => {
+    if (step !== 'rotate') return;
+
+    const checkOrientation = () => {
+      const landscape = window.innerWidth > window.innerHeight;
+      setIsLandscape(landscape);
+
+      // Auto-navigate to intro when user rotates to landscape
+      if (landscape) {
+        setTimeout(() => {
+          setStep('intro');
+        }, 1200); // Much faster transition (1.2s)
+      }
+    };
+
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', () => {
+      // Small delay for orientationchange to settle
+      setTimeout(checkOrientation, 100);
+    });
+
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
+  }, [step, navigate]);
+
+  // Safety timer: Auto-proceed if stuck in rotate screen for > 10s
+  useEffect(() => {
+    if (step === 'rotate') {
+      const safetyTimer = setTimeout(() => {
+        setStep('intro');
+      }, 10000);
+      return () => clearTimeout(safetyTimer);
+    }
+  }, [step]);
+
+  const handleSelect = useCallback((device) => {
+    setSelected(device);
+
+    setTimeout(() => {
+      localStorage.setItem('leadbook_device', device);
+      
+      if (device === 'pc') {
+        setStep('intro');
+      } else {
+        setStep('mobile-options');
+      }
+    }, 400);
+  }, []);
+
+  return (
+    <motion.div
+      initial={{ opacity: 1 }}
+      animate={{ opacity: isTransitioning ? 0 : 1 }}
+      transition={{ duration: 0.6, ease: 'easeInOut' }}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        background: '#000',
+      }}
+    >
+      {/* ─── Iridescence Background ─── */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        opacity: 0.35,
+        zIndex: 0,
+      }}>
+        <Iridescence
+          color={IRIDESCENCE_COLOR}
+          speed={0.6}
+          amplitude={0.15}
+          mouseReact={true}
+        />
+      </div>
+
+      {/* ─── Dark overlay ─── */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'radial-gradient(ellipse at 50% 40%, transparent 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.85) 100%)',
+        zIndex: 1,
+      }} />
+
+      {/* ─── Grain texture ─── */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E")`,
+        opacity: 0.5,
+        zIndex: 2,
+        pointerEvents: 'none',
+      }} />
+
+      {/* ─── Main Content ─── */}
+      <div style={{
+        position: 'relative',
+        zIndex: 10,
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px',
+      }}>
+        {/* --- Logo clickable to Landing --- */}
+        <div style={{
+          position: 'absolute',
+          top: isMobile ? '24px' : '32px',
+          left: isMobile ? '50%' : '42px',
+          transform: isMobile ? 'translateX(-50%)' : 'none',
+          zIndex: 100,
+          transition: 'all 0.4s ease',
+          opacity: step === 'intro' ? 0 : 1, 
+          pointerEvents: step === 'intro' ? 'none' : 'auto',
+        }}>
+          <button
+            onClick={() => navigate('/landing')}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              display: 'flex',
+              alignItems: 'center',
+              transform: isMobile ? 'scale(1)' : 'none',
+            }}
+          >
+            <Logo size="huge" />
+          </button>
+        </div>
+        <AnimatePresence mode="wait">
+          {/* ═══════════ STEP 1: Device Selection ═══════════ */}
+          {showContent && step === 'select' && (
+            <motion.div
+              key="select"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.4 }}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                width: '100%',
+                marginTop: isMobile ? '40px' : '0',
+              }}
+            >
+
+
+              {/* Headline */}
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+                style={{
+                  fontFamily: '"Syne", sans-serif',
+                  fontSize: 'clamp(28px, 5vw, 48px)',
+                  fontWeight: 800,
+                  color: '#fff',
+                  textAlign: 'center',
+                  lineHeight: 1.1,
+                  letterSpacing: '-0.03em',
+                  marginBottom: isMobile ? '8px' : '12px',
+                  maxWidth: '600px',
+                }}
+              >
+                ¿Desde dónde nos{' '}
+                <span style={{
+                  background: 'linear-gradient(135deg, #00D4FF, #A78BFA)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}>
+                  visitás?
+                </span>
+              </motion.h1>
+
+              {/* Subtext */}
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                style={{
+                  fontFamily: '"DM Sans", sans-serif',
+                  fontSize: '16px',
+                  color: '#94A3B8',
+                  textAlign: 'center',
+                  maxWidth: '420px',
+                  lineHeight: 1.6,
+                  marginBottom: isMobile ? '32px' : '48px',
+                  fontSize: isMobile ? '14px' : '16px',
+                }}
+              >
+                Optimizamos tu experiencia según tu dispositivo.
+              </motion.p>
+
+              {/* Device Cards */}
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                style={{
+                  display: 'flex',
+                  gap: isMobile ? '12px' : '32px',
+                  flexDirection: 'row', // Keep it horizontal like PC
+                  alignItems: 'stretch',
+                  justifyContent: 'center',
+                  width: '100%',
+                  maxWidth: '900px',
+                }}
+              >
+                <DeviceCard
+                  icon={<Monitor size={52} strokeWidth={1.4} />}
+                  title="Computadora"
+                  description="Desktop o Laptop"
+                  selected={selected === 'pc'}
+                  onSelect={() => handleSelect('pc')}
+                  isMobile={isMobile}
+                />
+                <DeviceCard
+                  icon={<Smartphone size={52} strokeWidth={1.4} />}
+                  title="Celular"
+                  description="Smartphone o Tablet"
+                  selected={selected === 'mobile'}
+                  onSelect={() => handleSelect('mobile')}
+                  isMobile={isMobile}
+                />
+              </motion.div>
+            </motion.div>
+          )}
+
+          {/* ═══════════ STEP 1.5: Mobile Options ═══════════ */}
+          {step === 'mobile-options' && (
+            <motion.div
+              key="mobile-options"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                width: '100%',
+                maxWidth: '800px',
+              }}
+            >
+              <motion.h2
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                style={{
+                  fontFamily: '"Syne", sans-serif',
+                  fontSize: 'clamp(26px, 7vw, 42px)',
+                  fontWeight: 800,
+                  color: '#fff',
+                  textAlign: 'center',
+                  marginBottom: '12px',
+                  letterSpacing: '-0.02em',
+                  textShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                }}
+              >
+                ¿Cómo querés{' '}
+                <span style={{ 
+                  background: 'linear-gradient(135deg, #00D4FF, #A78BFA)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}>continuar?</span>
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                style={{
+                  fontFamily: '"DM Sans", sans-serif',
+                  fontSize: '15px',
+                  color: '#94A3B8',
+                  textAlign: 'center',
+                  marginBottom: '40px',
+                }}
+              >
+                Elegí la mejor opción para tu dispositivo.
+              </motion.p>
+
+              <div style={{
+                display: 'flex',
+                gap: '16px',
+                width: '100%',
+                justifyContent: 'center',
+                flexDirection: isMobile ? 'row' : 'row', // Keep it horizontal for better look
+                alignItems: 'stretch',
+              }}>
+                <DeviceCard
+                  icon={<Globe size={isMobile ? 32 : 48} strokeWidth={1.4} />}
+                  title="Página web"
+                  description="Navegar ahora"
+                  onSelect={() => {
+                    setIsTransitioning(true);
+                    setTimeout(() => navigate('/landing'), 300);
+                  }}
+                  isMobile={isMobile}
+                />
+                <DeviceCard
+                  icon={<Download size={isMobile ? 32 : 48} strokeWidth={1.4} />}
+                  title="Descargar App"
+                  description="Instalar ahora"
+                  onSelect={() => {
+                    alert('¡La aplicación se está preparando para la descarga!');
+                  }}
+                  isMobile={isMobile}
+                />
+              </div>
+
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                onClick={() => setStep('select')}
+                style={{
+                  marginTop: '32px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#94A3B8',
+                  borderRadius: '50%',
+                  width: '48px',
+                  height: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  backdropFilter: 'blur(10px)',
+                  transition: 'all 0.3s ease',
+                }}
+                whileHover={{ scale: 1.1, backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+                whileTap={{ scale: 0.9 }}
+              >
+                <ArrowLeft size={20} />
+              </motion.button>
+            </motion.div>
+          )}
+
+          {/* ═══════════ STEP 2: Rotate Phone ═══════════ */}
+          {step === 'rotate' && (
+            <motion.div
+              key="rotate"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: isMobile ? '20px' : '32px',
+                textAlign: 'center',
+                padding: '24px',
+                marginTop: isMobile ? '30px' : '0',
+              }}
+            >
+              {/* Animated phone rotation icon */}
+              <motion.div
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                }}
+              >
+                {/* Pulsing ring */}
+                <motion.div
+                  animate={{
+                    scale: [1, 1.3, 1],
+                    opacity: [0.3, 0.08, 0.3],
+                  }}
+                  transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    borderRadius: '50%',
+                    border: '2px solid rgba(0,212,255,0.3)',
+                  }}
+                />
+
+                {/* Phone icon that rotates */}
+                <motion.div
+                  animate={{ rotate: [0, -90, -90, 0] }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: 'easeInOut',
+                    times: [0, 0.35, 0.7, 1],
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transform: isMobile ? 'scale(0.85)' : 'none',
+                  }}
+                >
+                  <Smartphone
+                    size={isMobile ? 48 : 56}
+                    strokeWidth={1.3}
+                    color="#00D4FF"
+                  />
+                </motion.div>
+              </motion.div>
+
+              {/* Rotate arrow hint */}
+              <motion.div
+                animate={{ rotate: [0, -20, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                style={{ color: '#64748B' }}
+              >
+                <RotateCcw size={28} strokeWidth={1.5} />
+              </motion.div>
+
+              {/* Text */}
+              <div>
+                <motion.h2
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                  style={{
+                    fontFamily: '"Syne", sans-serif',
+                    fontSize: 'clamp(24px, 6vw, 36px)',
+                    fontWeight: 800,
+                    color: '#fff',
+                    lineHeight: 1.2,
+                    marginBottom: '12px',
+                    letterSpacing: '-0.02em',
+                  }}
+                >
+                  Bloqueá tu pantalla
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35, duration: 0.6 }}
+                  style={{
+                    fontFamily: '"DM Sans", sans-serif',
+                    fontSize: '15px',
+                    color: '#94A3B8',
+                    lineHeight: 1.6,
+                    maxWidth: '320px',
+                  }}
+                >
+                  Activá el bloqueo de orientación vertical de tu celular, y luego sostenelo en{' '}
+                  <span style={{ color: '#00D4FF', fontWeight: 600 }}>modo horizontal</span>.
+                </motion.p>
+              </div>
+
+              {/* Ready button to advance since we can't detect physical rotation if locked */}
+              <motion.button
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+                onClick={() => setStep('intro')}
+                style={{
+                  padding: '14px 32px',
+                  borderRadius: '99px',
+                  background: 'linear-gradient(135deg, #00D4FF, #00BBDD)',
+                  color: '#070B14',
+                  fontFamily: '"DM Sans", sans-serif',
+                  fontSize: '15px',
+                  fontWeight: 700,
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 0 20px rgba(0,212,255,0.3)',
+                  marginTop: '10px'
+                }}
+              >
+                ¡Listo, Continuar!
+              </motion.button>
+            </motion.div>
+          )}
+
+          {/* ═══════════ STEP 3: Intro (Conditional: Video for PC, Splash for Mobile) ═══════════ */}
+          {step === 'intro' && (
+            isMobile ? (
+              <motion.div
+                key="intro-mobile"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.8 }}
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  zIndex: 50,
+                  background: '#070B14',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <motion.div
+                  initial={{ scale: 0.5, opacity: 0, filter: 'blur(10px)' }}
+                  animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+                  transition={{ 
+                    duration: 1.2, 
+                    ease: [0.16, 1, 0.3, 1] 
+                  }}
+                  onAnimationComplete={() => {
+                    // After logo appears, wait a bit and navigate
+                    setTimeout(() => {
+                      setIsTransitioning(true);
+                      setTimeout(() => navigate('/landing'), 800);
+                    }, 1200);
+                  }}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '20px'
+                  }}
+                >
+                  <Logo size="jumbo" />
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: '100px' }}
+                    transition={{ delay: 0.5, duration: 1 }}
+                    style={{
+                      height: '2px',
+                      background: 'linear-gradient(90deg, transparent, #00D4FF, transparent)',
+                    }}
+                  />
+                </motion.div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="intro-pc"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.8 }}
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  zIndex: 50,
+                  background: '#000',
+                }}
+              >
+                <video
+                  src="/intro-full.mp4"
+                  autoPlay
+                  muted
+                  playsInline
+                  onEnded={() => {
+                    setIsTransitioning(true);
+                    setTimeout(() => navigate('/landing'), 600);
+                  }}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }}
+                />
+              </motion.div>
+            )
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ─── Large Device Selection Card ─── */
+function DeviceCard({ icon, title, description, selected, onSelect, isMobile }) {
+  return (
+    <motion.div
+      onClick={onSelect}
+      whileHover={{ scale: 1.03, y: -6 }}
+      whileTap={{ scale: 0.97 }}
+      animate={selected ? { scale: 1.02 } : { scale: 1 }}
+      transition={{ type: 'spring', stiffness: 260, damping: 20 }}
+      style={{
+        width: isMobile ? 'calc(50% - 6px)' : '280px',
+        maxWidth: '340px',
+        minHeight: isMobile ? '220px' : '300px',
+        padding: isMobile ? '24px 12px' : '48px 32px 40px',
+        borderRadius: '32px',
+        cursor: 'pointer',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: isMobile ? '16px' : '20px',
+        position: 'relative',
+        overflow: 'hidden',
+        background: selected
+          ? 'rgba(0, 212, 255, 0.08)'
+          : 'rgba(255, 255, 255, 0.03)',
+        border: selected
+          ? '2px solid rgba(0, 212, 255, 0.45)'
+          : '1px solid rgba(255, 255, 255, 0.08)',
+        boxShadow: selected
+          ? '0 0 40px rgba(0, 212, 255, 0.15), 0 20px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)'
+          : '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)',
+        backdropFilter: 'blur(30px)',
+        WebkitBackdropFilter: 'blur(30px)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      }}
+    >
+      {/* Background glow for the whole card */}
+      {selected && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'radial-gradient(circle at center, rgba(0,212,255,0.15) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+
+      {/* Animated light line at bottom */}
+      {selected && (
+        <motion.div
+          initial={{ opacity: 0, width: 0 }}
+          animate={{ opacity: 1, width: '60%' }}
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: '20%',
+            height: '2px',
+            background: 'linear-gradient(90deg, transparent, #00D4FF, transparent)',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+
+      {/* Icon Container with Glow */}
+      <motion.div
+        animate={{
+          scale: selected ? 1.1 : 1,
+          borderColor: selected ? 'rgba(0,212,255,0.4)' : 'rgba(255,255,255,0.1)',
+        }}
+        style={{
+          width: isMobile ? '72px' : '96px',
+          height: isMobile ? '72px' : '96px',
+          borderRadius: isMobile ? '20px' : '24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: selected
+            ? 'linear-gradient(145deg, rgba(0,212,255,0.2), rgba(124,58,237,0.1))'
+            : 'rgba(255,255,255,0.05)',
+          border: '1px solid',
+          color: selected ? '#00D4FF' : '#94A3B8',
+          position: 'relative',
+          zIndex: 1,
+          boxShadow: selected ? '0 0 30px rgba(0,212,255,0.2)' : 'none',
+        }}
+      >
+        {/* Glow behind icon */}
+        {selected && (
+          <motion.div
+            animate={{ opacity: [0.4, 0.7, 0.4] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            style={{
+              position: 'absolute',
+              inset: '-10px',
+              background: 'radial-gradient(circle, rgba(0,212,255,0.3) 0%, transparent 70%)',
+              filter: 'blur(10px)',
+              zIndex: -1,
+            }}
+          />
+        )}
+        
+        <div style={{ transform: isMobile ? 'scale(0.8)' : 'none' }}>
+          {icon}
+        </div>
+      </motion.div>
+
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        flex: 1,
+        zIndex: 1,
+      }}>
+        <span style={{
+          fontFamily: '"Syne", sans-serif',
+          fontSize: isMobile ? '17px' : '22px',
+          fontWeight: 800,
+          color: selected ? '#fff' : '#CBD5E1',
+          transition: 'color 0.3s ease',
+          textAlign: 'center',
+          letterSpacing: '-0.01em',
+          marginBottom: '4px',
+        }}>
+          {title}
+        </span>
+
+        <span style={{
+          fontFamily: '"DM Sans", sans-serif',
+          fontSize: isMobile ? '12px' : '14px',
+          color: selected ? '#94A3B8' : '#64748B',
+          transition: 'color 0.3s ease',
+          textAlign: 'center',
+          lineHeight: 1.4,
+        }}>
+          {description}
+        </span>
+      </div>
+
+      {/* Selected Indicator */}
+      <motion.div
+        initial={false}
+        animate={{
+          scale: selected ? 1 : 0,
+          opacity: selected ? 1 : 0,
+        }}
+        transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+        style={{
+          position: 'absolute',
+          top: '24px',
+          right: '24px',
+          width: '24px',
+          height: '24px',
+          borderRadius: '50%',
+          background: 'linear-gradient(135deg, #00D4FF, #7C3AED)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 0 15px rgba(0,212,255,0.4)',
+          zIndex: 2,
+        }}
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M2 6L5 9L10 3" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </motion.div>
+    </motion.div>
+  );
+}

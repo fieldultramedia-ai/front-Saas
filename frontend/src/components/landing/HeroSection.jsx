@@ -1,0 +1,626 @@
+import { Suspense, lazy, useRef, useEffect, useState, Component, useCallback } from 'react'
+import gsap from 'gsap'
+import { MetalButton, LiquidButton } from '../ui/FancyButtons'
+import SplitText from '../ui/SplitText'
+import Logo from '../Logo'
+import { useRotation } from '../layout/RotationWrapper'
+import { InteractiveRobotSpline } from '../ui/interactive-3d-robot'
+
+import HoverLetters from '../ui/HoverLetters'
+import { AnimatedText } from '../ui/AnimatedText'
+
+/* ── TextGlowZone ──────────────────────────────────────
+   Invisible container that tracks pointer position and
+   applies a radial glow that clips to TEXT OUTLINES only.
+   No card, no background, no border — just text glow.
+   ────────────────────────────────────────────────────── */
+const textGlowStyleId = 'text-glow-zone-styles'
+if (typeof document !== 'undefined' && !document.getElementById(textGlowStyleId)) {
+  const s = document.createElement('style')
+  s.id = textGlowStyleId
+  s.textContent = `
+    .text-glow-zone .tgz-glow {
+      --spot-size: 380px;
+      --hue: calc(280 + (var(--xp, 0.5) * 120));
+    }
+    .text-glow-zone .tgz-glow,
+    .text-glow-zone .tgz-glow * {
+      -webkit-text-stroke: 1.5px transparent;
+    }
+    .text-glow-zone .tgz-glow {
+      background-image:
+        radial-gradient(
+          var(--spot-size) var(--spot-size) at
+          calc(var(--mx, 0) * 1px)
+          calc(var(--my, 0) * 1px),
+          rgba(0, 212, 255, 0.9) 0%,
+          rgba(96, 1, 209, 0.7) 100%
+        ),
+        linear-gradient(rgba(255,255,255,0.18), rgba(255,255,255,0.18));
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+    .text-glow-zone .tgz-glow-subtle,
+    .text-glow-zone .tgz-glow-subtle * {
+      -webkit-text-stroke: 1px transparent;
+    }
+    .text-glow-zone .tgz-glow-subtle {
+      background-image:
+        radial-gradient(
+          var(--spot-size) var(--spot-size) at
+          calc(var(--mx, 0) * 1px)
+          calc(var(--my, 0) * 1px),
+          rgba(0, 212, 255, 0.7) 0%,
+          rgba(96, 1, 209, 0.5) 100%
+        ),
+        linear-gradient(rgba(255,255,255,0.08), rgba(255,255,255,0.08));
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+  `
+  document.head.appendChild(s)
+}
+
+function TextGlowZone({ children, style, className = '' }) {
+  const ref = useRef(null)
+
+  const handlePointer = useCallback((e) => {
+    const el = ref.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    gsap.killTweensOf(el, '--mx,--my,--xp') // Pause auto-animation on interaction
+    el.style.setProperty('--mx', (e.clientX - rect.left).toFixed(1))
+    el.style.setProperty('--my', (e.clientY - rect.top).toFixed(1))
+    el.style.setProperty('--xp', (e.clientX / window.innerWidth).toFixed(3))
+  }, [])
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    // Create an automatic scanning animation
+    const animateGlow = () => {
+      gsap.to(el, {
+        '--mx': 500,
+        '--my': 100,
+        '--xp': 0.8,
+        duration: 4,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+      })
+      
+      gsap.to(el, {
+        '--my': 200,
+        duration: 6,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+      })
+    }
+
+    animateGlow()
+
+    document.addEventListener('pointermove', handlePointer)
+    return () => {
+      document.removeEventListener('pointermove', handlePointer)
+      gsap.killTweensOf(el)
+    }
+  }, [handlePointer])
+
+  return (
+    <div ref={ref} className={`text-glow-zone ${className}`} style={style}>
+      {children}
+    </div>
+  )
+}
+
+/* ── inline keyframes (inyectadas una sola vez) ── */
+const auroraStyleId = 'hero-aurora-keyframes'
+if (typeof document !== 'undefined' && !document.getElementById(auroraStyleId)) {
+  const style = document.createElement('style')
+  style.id = auroraStyleId
+  style.textContent = `
+    @keyframes auroraFloat1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      25%      { transform: translate(40px, -30px) scale(1.1); }
+      50%      { transform: translate(-20px, 20px) scale(0.95); }
+      75%      { transform: translate(30px, 40px) scale(1.05); }
+    }
+    @keyframes auroraFloat2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33%      { transform: translate(-50px, 30px) scale(1.12); }
+      66%      { transform: translate(30px, -40px) scale(0.92); }
+    }
+    @keyframes auroraFloat3 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      20%      { transform: translate(60px, 20px) scale(1.08); }
+      50%      { transform: translate(-30px, -50px) scale(0.96); }
+      80%      { transform: translate(20px, 30px) scale(1.04); }
+    }
+    @keyframes aurroraPulse {
+      0%, 100% { opacity: 0.5; }
+      50%      { opacity: 0.8; }
+    }
+    @keyframes waveDrift {
+      0%   { transform: translateX(-30%) scaleY(1); }
+      50%  { transform: translateX(-20%) scaleY(1.15); }
+      100% { transform: translateX(-30%) scaleY(1); }
+    }
+  `
+  document.head.appendChild(style)
+}
+/* ── Helper: fade-in-up block for non-text elements ── */
+function HeroAnimatedBlock({ children, delay = 0 }) {
+  const ref = useRef(null)
+  const animated = useRef(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    gsap.set(el, { opacity: 0, y: 24 })
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !animated.current) {
+          animated.current = true
+          gsap.to(el, {
+            opacity: 1,
+            y: 0,
+            duration: 0.7,
+            ease: 'power3.out',
+            delay,
+          })
+        }
+      },
+      { threshold: 0.1, rootMargin: '-50px' }
+    )
+
+    observer.observe(el)
+    return () => {
+      observer.disconnect()
+      gsap.killTweensOf(el)
+    }
+  }, [delay])
+
+  return <div ref={ref}>{children}</div>
+}
+
+export default function HeroSection({ isActive, onNavigate, onSceneReady }) {
+  const [animationKey, setAnimationKey] = useState(0);
+  const [isFirstRun, setIsFirstRun] = useState(true);
+  const isRotated = useRotation();
+  
+  // Custom hook for landscape responsiveness
+  const [isLandscapeShort, setIsLandscapeShort] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
+  
+  useEffect(() => {
+    const mqLandscape = window.matchMedia('(max-height: 500px) and (orientation: landscape)');
+    const mqPortrait = window.matchMedia('(orientation: portrait)');
+    
+    const updateHeader = () => {
+      setIsLandscapeShort(mqLandscape.matches);
+      setIsPortrait(mqPortrait.matches);
+    };
+    
+    updateHeader();
+    mqLandscape.addEventListener('change', updateHeader);
+    mqPortrait.addEventListener('change', updateHeader);
+    
+    return () => {
+      mqLandscape.removeEventListener('change', updateHeader);
+      mqPortrait.removeEventListener('change', updateHeader);
+    };
+  }, [isRotated]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAnimationKey(prev => prev + 1);
+      setIsFirstRun(false);
+    }, 20000); // Repeat animations every 20 seconds
+    return () => clearInterval(interval);
+  }, []);
+
+  // 40% faster means it takes 60% of the normal time (0.6 multiplier)
+  const speedMult = isFirstRun ? 1 : 0.6;
+
+  return (
+    <section 
+      style={{
+      width: '100%',
+      height: '100%',
+      position: 'relative',
+      overflow: 'hidden',
+      background: '#000',
+    }}>
+
+      {/* ══════════════════════════════════════════
+          AURORA / GLOW  BACKGROUND EFFECTS
+          — sit behind everything (z-index 0)
+          — positioned left-center so robot stays clean
+          ══════════════════════════════════════════ */}
+
+      {/* ── Orb 1: Violet grande, arriba/centro en portrait, izquierda en landscape ── */}
+      <div style={{
+        position: 'absolute',
+        top: isPortrait ? '10%' : '5%',
+        left: isPortrait ? '0%' : '2%',
+        width: isPortrait ? '100%' : '55%',
+        height: isPortrait ? '40%' : '80%',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(124,58,237,0.38) 0%, rgba(96,1,209,0.18) 40%, transparent 70%)',
+        filter: 'blur(60px)',
+        zIndex: 0,
+        pointerEvents: 'none',
+        animation: 'auroraFloat1 12s ease-in-out infinite',
+      }} />
+
+      {/* ── Orb 2: Cyan, centro ── */}
+      <div style={{
+        position: 'absolute',
+        top: isPortrait ? '30%' : '20%',
+        left: isPortrait ? '10%' : '5%',
+        width: isPortrait ? '80%' : '45%',
+        height: isPortrait ? '40%' : '55%',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(0,212,255,0.28) 0%, rgba(0,212,255,0.10) 45%, transparent 70%)',
+        filter: 'blur(55px)',
+        zIndex: 0,
+        pointerEvents: 'none',
+        animation: 'auroraFloat2 15s ease-in-out infinite',
+      }} />
+
+      {/* ── Orb 3: Violet más profundo, esquina inf-izq ── */}
+      <div style={{
+        position: 'absolute',
+        bottom: '-5%',
+        left: '5%',
+        width: '50%',
+        height: '60%',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(96,1,209,0.32) 0%, rgba(124,58,237,0.14) 50%, transparent 70%)',
+        filter: 'blur(70px)',
+        zIndex: 0,
+        pointerEvents: 'none',
+        animation: 'auroraFloat3 18s ease-in-out infinite',
+      }} />
+
+      {/* ── Orb 4: Cyan tenue, arriba-centro ── */}
+      <div style={{
+        position: 'absolute',
+        top: '-10%',
+        left: '15%',
+        width: '40%',
+        height: '50%',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(0,212,255,0.22) 0%, rgba(0,212,255,0.06) 50%, transparent 70%)',
+        filter: 'blur(70px)',
+        zIndex: 0,
+        pointerEvents: 'none',
+        animation: 'auroraFloat1 20s ease-in-out infinite reverse',
+      }} />
+
+      {/* ── Orb 5: Violet suave, derecha-centro (detrás del robot, muy difuso) ── */}
+      <div style={{
+        position: 'absolute',
+        top: '15%',
+        right: '5%',
+        width: '40%',
+        height: '60%',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(124,58,237,0.14) 0%, rgba(96,1,209,0.06) 40%, transparent 65%)',
+        filter: 'blur(120px)',
+        zIndex: 0,
+        pointerEvents: 'none',
+        animation: 'auroraFloat2 22s ease-in-out infinite reverse',
+      }} />
+
+      {/* ── Wave glow band — simula las ondas de la referencia ── */}
+      <div style={{
+        position: 'absolute',
+        top: '30%',
+        left: '2%',
+        width: '75%',
+        height: '35%',
+        background: `
+          linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(124,58,237,0.25) 15%,
+            rgba(0,212,255,0.15) 45%,
+            rgba(124,58,237,0.22) 75%,
+            transparent 100%
+          )
+        `,
+        filter: 'blur(35px)',
+        zIndex: 0,
+        pointerEvents: 'none',
+        animation: 'waveDrift 10s ease-in-out infinite',
+        borderRadius: '50%',
+      }} />
+
+      {/* ── Second wave band (offset) ── */}
+      <div style={{
+        position: 'absolute',
+        top: '48%',
+        left: '5%',
+        width: '65%',
+        height: '25%',
+        background: `
+          linear-gradient(
+            90deg,
+            transparent 0%,
+            rgba(0,212,255,0.14) 25%,
+            rgba(124,58,237,0.18) 55%,
+            rgba(96,1,209,0.10) 80%,
+            transparent 100%
+          )
+        `,
+        filter: 'blur(40px)',
+        zIndex: 0,
+        pointerEvents: 'none',
+        animation: 'waveDrift 14s ease-in-out infinite reverse',
+        borderRadius: '50%',
+      }} />
+
+      {/* ── Subtle noise/grain texture overlay (from design system) ── */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        zIndex: 0,
+        pointerEvents: 'none',
+        opacity: 0.03,
+        mixBlendMode: 'overlay',
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
+        backgroundSize: '128px 128px',
+      }} />
+
+      {/* ── Vignette edges — soft fade only at far edges ── */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        zIndex: 0,
+        pointerEvents: 'none',
+        background: `
+          radial-gradient(
+            ellipse 90% 80% at 35% 50%,
+            transparent 50%,
+            rgba(0,0,0,0.30) 80%,
+            rgba(0,0,0,0.6) 100%
+          )
+        `,
+      }} />
+
+      {/* ── Left edge soft fade — prevents hard clip on the left ── */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: isLandscapeShort ? '8%' : '8%',
+        height: '100%',
+        background: 'linear-gradient(to right, #000 0%, transparent 100%)',
+        zIndex: 2,
+        pointerEvents: 'none',
+      }} />
+
+
+
+
+      {/* ── OVERLAY DERECHO — pinta #000 sobre el borde crudo del canvas ── */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        width: isRotated ? '8%' : '14%',
+        height: '100%',
+        background: 'linear-gradient(to right, transparent 0%, #000 100%)',
+        zIndex: 3,
+        pointerEvents: 'none',
+      }} />
+
+      {/* ── OVERLAY INFERIOR — gradiente suave ── */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        width: '100%',
+        height: isPortrait ? '30%' : '55%',
+        background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.4) 40%, rgba(0,0,0,0.85) 70%, #000 100%)',
+        zIndex: 3,
+        pointerEvents: 'none',
+      }} />
+
+      {/* Watermark tapado - absoluto dentro del hero, no fixed */}
+      <div style={{
+        position: 'absolute',
+        bottom: 0, right: 0,
+        width: '220px', height: '52px',
+        background: 'inherit',
+        zIndex: 5,
+        pointerEvents: 'none',
+      }} />
+      
+      {/* ── ROBOT ── */}
+      {!isPortrait && (
+        <div style={{
+          position: 'absolute',
+          top: isPortrait ? '35%' : (isRotated ? '10%' : '0%'),
+          right: isPortrait ? 'auto' : (isRotated ? '2%' : (isLandscapeShort ? '0%' : '-4%')),
+          left: isPortrait ? '-5%' : 'auto',
+          width: isPortrait ? '110%' : (isRotated ? '38%' : (isLandscapeShort ? '40%' : '60%')),
+          height: isPortrait ? '65%' : (isRotated ? '85%' : (isLandscapeShort ? '100%' : '120%')),
+          zIndex: 1,
+          mixBlendMode: 'screen',
+        }}>
+          <InteractiveRobotSpline
+            scene="https://prod.spline.design/PyzDhpQ9E5f1E3MT/scene.splinecode"
+            className="absolute inset-0 z-0 h-full w-full"
+          />
+        </div>
+      )}
+
+      {/* ── TEXTO ── */}
+      <TextGlowZone key={animationKey} style={{
+        position: 'absolute',
+        top: isPortrait ? '10%' : (isRotated ? '8%' : (isLandscapeShort ? '15%' : '10%')), 
+        left: isPortrait ? '5%' : (isRotated ? '3%' : '4%'),
+        height: isPortrait ? 'auto' : (isRotated ? '88%' : (isLandscapeShort ? '80%' : '80%')),
+        width: isPortrait ? '90%' : (isRotated ? '55%' : (isLandscapeShort ? '55%' : '54%')),
+        zIndex: 4,
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: isPortrait ? 'center' : 'flex-start',
+        padding: isPortrait ? '1rem 1.5rem' : (isRotated ? '0.4rem 1.2rem' : (isLandscapeShort ? '1.5rem 2rem' : '3rem')),
+        gap: isPortrait ? '0.8rem' : (isRotated ? '0.3rem' : (isLandscapeShort ? '0.6rem' : '1.5rem')),
+      }}>
+
+        {/* Nombre de marca — SplitText con entrada animada + Shiny */}
+        <HeroAnimatedBlock delay={0.1 * speedMult}>
+          <div style={{ position: 'relative' }}>
+            <SplitText
+              text="LeadBook"
+              letterClass="animated-shiny-text"
+              hoverJump
+              delay={40 * speedMult}
+              duration={0.7 * speedMult}
+              startDelay={0.2 * speedMult}
+              textAlign={isPortrait ? 'center' : 'left'}
+              style={{
+                fontSize: isPortrait ? '2.5rem' : (isRotated ? '1.4rem' : (isLandscapeShort ? '1rem' : 'clamp(2.8rem, 5vw, 4.5rem)')),
+                fontFamily: 'Syne, sans-serif',
+                fontWeight: 800,
+                letterSpacing: '-0.04em',
+                lineHeight: 1,
+                color: '#FFFFFF',
+              }}
+            />
+          </div>
+        </HeroAnimatedBlock>
+
+        {/* Título principal — SplitText con entrada animada + Shiny */}
+        <HeroAnimatedBlock delay={0.3 * speedMult}>
+          <div style={{ position: 'relative' }}>
+            <SplitText
+              text="Convertí cualquier producto en contenido que atrare clientes"
+              letterClass="animated-shiny-text"
+              hoverJump
+              delay={35 * speedMult}
+              duration={0.8 * speedMult}
+              startDelay={0.5 * speedMult}
+              textAlign={isPortrait ? 'center' : 'left'}
+              style={{
+                fontSize: isPortrait ? '2.2rem' : (isRotated ? '1rem' : (isLandscapeShort ? '1rem' : 'clamp(2.4rem, 4.5vw, 4rem)')),
+                fontFamily: 'Syne, sans-serif',
+                fontWeight: 800,
+                lineHeight: 1.1,
+                letterSpacing: '-0.04em',
+                margin: 0,
+                color: '#FFFFFF',
+              }}
+            />
+          </div>
+        </HeroAnimatedBlock>
+        {/* Subtítulo — sin glow extra */}
+        <div>
+          <SplitText
+            text="Automatizá tu marketing con IA. Crea materiales premium en segundos, sin complicaciones."
+            tag="p"
+            hoverJump
+            splitType="words"
+            delay={30 * speedMult}
+            duration={0.5 * speedMult}
+            ease="power3.out"
+            from={{ opacity: 0, y: 20 }}
+            to={{ opacity: 1, y: 0 }}
+            startDelay={1.1 * speedMult}
+            threshold={0.1}
+            rootMargin="-50px"
+            textAlign={isPortrait ? 'center' : 'left'}
+            style={{
+              fontSize: isPortrait ? '0.85rem' : (isRotated ? '0.65rem' : (isLandscapeShort ? '0.65rem' : '1rem')),
+              color: 'rgba(255,255,255,0.55)',
+              lineHeight: (isRotated || isLandscapeShort) ? 1.3 : 1.7,
+              margin: '0 auto',
+              maxWidth: isPortrait ? '280px' : (isLandscapeShort ? '100%' : '420px'),
+              fontFamily: 'DM Sans, sans-serif',
+            }}
+          />
+        </div>
+
+        {/* Botones — fade in con GSAP */}
+        <HeroAnimatedBlock delay={1.5 * speedMult}>
+          <div style={{ 
+            display: 'flex', 
+            gap: (isRotated || isLandscapeShort) ? '0.4rem' : '1rem', 
+            flexWrap: 'wrap', 
+            justifyContent: isPortrait ? 'center' : 'flex-start',
+            alignItems: 'center',
+            transform: isPortrait ? 'scale(0.95)' : (isRotated ? 'scale(0.6)' : (isLandscapeShort ? 'scale(0.55)' : 'none')),
+            transformOrigin: isPortrait ? 'center' : 'left center',
+            pointerEvents: 'auto'
+          }}>
+            <MetalButton href="/register" variant="gradient">
+              Empezar gratis
+            </MetalButton>
+            <LiquidButton onClick={() => onNavigate?.('como-funciona')}>
+              Ver cómo funciona
+            </LiquidButton>
+          </div>
+        </HeroAnimatedBlock>
+
+        {/* Social proof — sin glow extra */}
+        <div>
+          <HeroAnimatedBlock delay={1.9 * speedMult}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: (isRotated || isLandscapeShort) ? '6px' : '12px',
+              transform: isRotated ? 'scale(0.6)' : (isLandscapeShort ? 'scale(0.55)' : 'none'),
+              transformOrigin: 'left center',
+              pointerEvents: 'auto'
+            }}>
+              <div style={{ display: 'flex' }}>
+                {[
+                  '/assets/social-proof/logo1.png',
+                  '/assets/social-proof/user2.png',
+                  '/assets/social-proof/logo3.png',
+                  '/assets/social-proof/logo4.png'
+                ].map((src, i) => (
+                  <div key={i} style={{
+                    width: isLandscapeShort ? '24px' : '30px', 
+                    height: isLandscapeShort ? '24px' : '30px',
+                    borderRadius: '50%',
+                    border: '2px solid #000',
+                    marginLeft: i > 0 ? '-8px' : '0',
+                    overflow: 'hidden',
+                    background: '#111',
+                    zIndex: 4 - i,
+                  }}>
+                    <img 
+                      src={src} 
+                      alt={`Business ${i+1}`} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                ))}
+              </div>
+              <div>
+                <HoverLetters tag="p" style={{
+                  fontSize: isLandscapeShort ? '0.6rem' : '0.7rem', 
+                  color: 'rgba(255,255,255,0.4)',
+                  margin: 0, textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  fontFamily: 'Manrope, sans-serif',
+                }}>+500 negocios confían en nosotros</HoverLetters>
+              </div>
+            </div>
+          </HeroAnimatedBlock>
+        </div>
+      </TextGlowZone>
+    </section>
+
+  )
+}

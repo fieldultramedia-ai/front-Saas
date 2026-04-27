@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="grad" x1="0.5" y1="1" x2="0.5" y2="0">
+      <stop offset="0%" stop-color="#0B4F52"/>
+      <stop offset="40%" stop-color="#0AAFB0"/>
+      <stop offset="100%" stop-color="#00E0FF"/>
+    </linearGradient>
+    <clipPath id="funnel">
+      <polygon points="12,14 52,14 35,58 29,58"/>
+    </clipPath>
+  </defs>
+  <!-- Funnel with horizontal stripe bands -->
+  <g clip-path="url(#funnel)">
+    <rect x="10" y="14" width="44" height="5" rx="1" fill="url(#grad)"/>
+    <rect x="10" y="22" width="44" height="5" rx="1" fill="url(#grad)"/>
+    <rect x="10" y="30" width="44" height="5" rx="1" fill="url(#grad)"/>
+    <rect x="10" y="38" width="44" height="4.5" rx="1" fill="url(#grad)"/>
+    <rect x="10" y="45" width="44" height="4" rx="1" fill="url(#grad)"/>
+    <rect x="10" y="52" width="44" height="4" rx="1" fill="url(#grad)"/>
+  </g>
+  <!-- Sweeping arrow going up-right -->
+  <path d="M20,18 C28,12 40,8 52,10 L56,2 L50,8 L48,1 L47,11 C39,8 28,10 20,16 Z" fill="url(#grad)"/>
+</svg>

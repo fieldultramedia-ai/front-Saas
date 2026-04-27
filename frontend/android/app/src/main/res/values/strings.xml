@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">LeadBook</string>
+    <string name="title_activity_main">LeadBook</string>
+    <string name="package_name">com.leadbook.app</string>
+    <string name="custom_url_scheme">com.leadbook.app</string>
+</resources>
