@@ -7,7 +7,6 @@ import {
   Eye, 
   EyeOff, 
   ArrowLeft, 
-  ArrowRight,
   LogIn
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -43,103 +42,122 @@ const MobileLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#070B14] text-white flex flex-col font-['DM_Sans'] overflow-x-hidden">
+    <div className="min-h-screen bg-[#070B14] text-white flex flex-col overflow-x-hidden relative">
       
       {/* Background Decorative Elements */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[70%] h-[40%] bg-[#00d4ff]/10 blur-[100px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[70%] h-[40%] bg-[#7c3aed]/10 blur-[100px] rounded-full" />
+        <div className="absolute top-[-10%] left-[-20%] w-[100%] h-[50%] bg-[#00d4ff]/10 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-20%] w-[100%] h-[50%] bg-[#7c3aed]/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
       {/* Top Header */}
       <div className="relative z-10 px-6 pt-10 pb-6 flex items-center justify-between">
         <button 
           onClick={() => navigate('/landing')}
-          className="p-2 rounded-xl bg-white/5 border border-white/10 text-white/70 active:scale-95 transition-all"
+          className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 text-white/40 flex items-center justify-center active:scale-90 transition-all"
         >
           <ArrowLeft size={20} />
         </button>
         <Logo size="small" />
-        <div className="w-10" />
+        <div className="w-12" />
       </div>
 
-      <main className="relative z-10 flex-1 px-6 flex flex-col justify-center pb-12">
+      <main className="relative z-10 flex-1 px-8 flex flex-col justify-center pb-20">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col gap-10"
+          className="flex flex-col gap-12"
         >
-          <div className="text-center">
-            <h1 className="text-4xl font-bold font-['Syne'] tracking-tight mb-3">
-              ¡Bienvenido <span className="text-[#00d4ff]">vuelve!</span>
+          <div className="text-left">
+            <h1 className="text-5xl font-black font-syne tracking-tighter italic leading-none mb-4 uppercase">
+              ¡HOLA DE<br/><span className="text-[#00d4ff]">NUEVO!</span>
             </h1>
-            <p className="text-white/50 text-sm">Gestiona tus leads con la potencia de la IA.</p>
+            <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.3em]">Gestioná tu imperio inmobiliario con IA</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-            <div className="flex flex-col gap-2">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-[#00d4ff]/70 ml-1">Email</label>
-              <div className="relative group">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 group-focus-within:text-[#00d4ff] transition-colors" />
-                <input 
-                  type="email"
-                  placeholder="tu@email.com"
-                  className="w-full bg-white/5 border border-white/10 focus:border-[#00d4ff]/50 rounded-2xl p-4 pl-12 text-sm outline-none transition-all"
-                  value={form.email}
-                  onChange={e => setForm({...form, email: e.target.value})}
-                />
-              </div>
-            </div>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+            <div className="space-y-6">
+              <MobileLoginInput 
+                label="Email Corporativo" 
+                icon={<Mail size={18} />} 
+                placeholder="tu@agencia.com"
+                value={form.email}
+                onChange={val => setForm({...form, email: val})}
+              />
 
-            <div className="flex flex-col gap-2">
-              <div className="flex justify-between items-center px-1">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-[#00d4ff]/70">Contraseña</label>
-                <button type="button" className="text-[10px] text-white/30 hover:text-[#00d4ff]">¿Olvidaste tu contraseña?</button>
-              </div>
-              <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 group-focus-within:text-[#00d4ff] transition-colors" />
-                <input 
+              <div className="space-y-2">
+                <MobileLoginInput 
+                  label="Contraseña" 
                   type={showPass ? 'text' : 'password'}
-                  placeholder="Tu contraseña secreta"
-                  className="w-full bg-white/5 border border-white/10 focus:border-[#00d4ff]/50 rounded-2xl p-4 pl-12 pr-12 text-sm outline-none transition-all"
+                  icon={<Lock size={18} />} 
+                  placeholder="********"
                   value={form.password}
-                  onChange={e => setForm({...form, password: e.target.value})}
+                  onChange={val => setForm({...form, password: val})}
+                  rightElement={
+                    <button 
+                      type="button"
+                      onClick={() => setShowPass(!showPass)}
+                      className="text-white/20"
+                    >
+                      {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  }
                 />
-                <button 
-                  type="button"
-                  onClick={() => setShowPass(!showPass)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30"
-                >
-                  {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
+                <div className="flex justify-end px-2">
+                   <button type="button" className="text-[9px] font-black uppercase tracking-widest text-white/20 hover:text-[#00d4ff] transition-colors">¿Olvidaste tu contraseña?</button>
+                </div>
               </div>
             </div>
 
             <button 
               type="submit"
               disabled={loading}
-              className="mt-4 w-full bg-gradient-to-r from-[#00d4ff] to-[#00b5d8] text-[#070B14] font-bold py-4 rounded-2xl shadow-[0_8px_20px_rgba(0,212,255,0.2)] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="mt-6 w-full h-18 bg-[#00d4ff] text-[#070B14] font-black uppercase tracking-[0.2em] rounded-3xl shadow-[0_12px_40px_rgba(0,212,255,0.3)] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-[#070B14] border-t-transparent rounded-full animate-spin" />
+                <div className="w-6 h-6 border-3 border-[#070B14] border-t-transparent rounded-full animate-spin" />
               ) : (
                 <>
-                  Iniciar Sesión
-                  <LogIn size={18} />
+                  <span>Entrar Ahora</span>
+                  <LogIn size={20} />
                 </>
               )}
             </button>
           </form>
 
-          <p className="text-center text-sm text-white/40">
-            ¿No tienes una cuenta? {' '}
-            <Link to="/register" className="text-[#00d4ff] font-bold hover:underline">Regístrate gratis</Link>
+          <p className="text-center text-[10px] font-black uppercase tracking-widest text-white/20">
+            ¿No tenés una cuenta? {' '}
+            <Link to="/register" className="text-[#00d4ff] hover:underline">Registrate gratis</Link>
           </p>
         </motion.div>
       </main>
-
     </div>
   );
 };
+
+function MobileLoginInput({ label, icon, value, onChange, placeholder, type = "text", rightElement }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 pl-2">{label}</label>
+      <div className="relative">
+        <div className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20">
+          {icon}
+        </div>
+        <input 
+          type={type}
+          className="w-full h-16 pl-14 pr-6 bg-white/[0.03] border border-white/10 rounded-2xl text-sm text-white focus:border-[#00d4ff] outline-none transition-all placeholder:text-white/10"
+          placeholder={placeholder}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+        />
+        {rightElement && (
+          <div className="absolute right-5 top-1/2 -translate-y-1/2">
+            {rightElement}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default MobileLogin;

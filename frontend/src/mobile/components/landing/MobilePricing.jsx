@@ -72,94 +72,103 @@ const MobilePricing = () => {
   };
 
   return (
-    <section className="py-20 px-6 bg-[#070B14]">
-      <div className="text-center mb-12">
-        <h2 className="text-3xl font-extrabold font-['Syne'] leading-tight mb-4 text-white">
-          Planes a tu <br />
-          <span className="bg-gradient-to-r from-[#00d4ff] to-[#6001d1] bg-clip-text text-transparent">
-            medida
-          </span>
+    <section className="py-24 px-6 bg-[#070B14] relative overflow-hidden">
+      {/* Background Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[#00d4ff]/5 blur-[120px] rounded-full pointer-events-none" />
+
+      <div className="text-center mb-16 relative z-10">
+        <h2 className="text-4xl font-black font-syne uppercase italic tracking-tighter leading-[0.9] text-white mb-6">
+          ELEGÍ TU <br />
+          <span className="text-[#00d4ff]">PLAN ÉLITE</span>
         </h2>
         
-        <div className="flex flex-col gap-4 mt-8">
+        <div className="flex flex-col gap-6 mt-10">
           {/* Toggle Mensual/Anual */}
           <div className="flex items-center justify-center gap-4">
-            <span className={`text-sm ${!isYearly ? 'text-white' : 'text-gray-500'}`}>Mensual</span>
+            <span className={cn("text-[10px] font-black uppercase tracking-widest transition-colors", !isYearly ? "text-white" : "text-white/20")}>Mensual</span>
             <button 
               onClick={() => setIsYearly(!isYearly)}
-              className="w-14 h-7 bg-[#1b2029] rounded-full border border-white/10 relative p-1"
+              className="w-14 h-8 bg-white/5 border border-white/10 rounded-full p-1 relative"
             >
               <motion.div 
-                animate={{ x: isYearly ? 28 : 0 }}
-                className="w-5 h-5 bg-[#00d4ff] rounded-full shadow-[0_0_10px_#00d4ff]"
+                animate={{ x: isYearly ? 24 : 0 }}
+                className="w-6 h-6 bg-[#00d4ff] rounded-full shadow-[0_0_10px_#00d4ff]"
               />
             </button>
-            <span className={`text-sm ${isYearly ? 'text-white' : 'text-gray-500'}`}>
-              Anual <span className="text-[#00ff88] text-[10px] font-bold ml-1">-25%</span>
+            <span className={cn("text-[10px] font-black uppercase tracking-widest transition-colors", isYearly ? "text-white" : "text-white/20")}>
+              Anual <span className="text-[#00ff88] ml-1">-25%</span>
             </span>
           </div>
 
           {/* Toggle Moneda */}
-          <div className="flex items-center justify-center gap-4">
-            <button 
-              onClick={() => setCurrency('USD')}
-              className={`px-4 py-1 rounded-full text-xs font-bold transition-all ${currency === 'USD' ? 'bg-[#00d4ff] text-black' : 'bg-white/5 text-white/60'}`}
-            >
-              USD
-            </button>
-            <button 
-              onClick={() => setCurrency('ARS')}
-              className={`px-4 py-1 rounded-full text-xs font-bold transition-all ${currency === 'ARS' ? 'bg-[#00d4ff] text-black' : 'bg-white/5 text-white/60'}`}
-            >
-              ARS
-            </button>
+          <div className="flex items-center justify-center gap-3">
+            {['USD', 'ARS'].map(curr => (
+              <button 
+                key={curr}
+                onClick={() => setCurrency(curr)}
+                className={cn(
+                  "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border",
+                  currency === curr 
+                    ? "bg-[#00d4ff] text-[#070B14] border-[#00d4ff] shadow-[0_4px_12px_rgba(0,212,255,0.3)]" 
+                    : "bg-white/5 border-white/10 text-white/40"
+                )}
+              >
+                {curr}
+              </button>
+            ))}
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col gap-8">
-        {plans.map((plan) => (
+      <div className="flex flex-col gap-8 relative z-10">
+        {plans.map((plan, idx) => (
           <motion.div
             key={plan.id}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className={`relative p-8 rounded-[2.5rem] border ${
+            transition={{ delay: idx * 0.1 }}
+            className={cn(
+              "relative p-8 rounded-[3rem] border transition-all backdrop-blur-xl",
               plan.popular 
-                ? 'bg-gradient-to-br from-[#00d4ff]/10 to-[#6001d1]/10 border-[#00d4ff]/30' 
-                : 'bg-[#1b2029]/40 border-white/5'
-            } backdrop-blur-xl`}
+                ? 'bg-white/[0.04] border-[#00d4ff]/30 shadow-[0_20px_50px_rgba(0,212,255,0.15)]' 
+                : 'bg-white/[0.01] border-white/5'
+            )}
           >
             {plan.popular && (
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-[#00d4ff] text-[#070B14] text-[10px] font-bold uppercase tracking-widest rounded-full">
-                Más Popular
+              <div className="absolute top-8 right-8 px-3 py-1 bg-[#00d4ff] text-[#070B14] text-[8px] font-black uppercase tracking-widest rounded-full shadow-[0_0_15px_rgba(0,212,255,0.5)]">
+                POPULAR
               </div>
             )}
 
-            <div className="flex items-center gap-4 mb-6">
-              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center">
-                <plan.icon className="text-[#00d4ff]" size={24} />
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-[#00d4ff]">
+                <plan.icon size={24} />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white font-['Syne']">{plan.name}</h3>
-                <p className="text-gray-400 text-xs uppercase tracking-widest">Plan {plan.id}</p>
+                <h3 className="text-xl font-black font-syne uppercase italic tracking-tighter text-white">{plan.name}</h3>
+                <p className="text-white/20 text-[9px] font-black uppercase tracking-[0.2em]">{plan.id}</p>
               </div>
             </div>
 
-            <div className="mb-8">
+            <div className="mb-10">
               <div className="flex items-baseline gap-1">
-                <span className="text-4xl font-extrabold text-white">
+                <span className="text-5xl font-black font-syne italic tracking-tighter text-white">
                   {getPrice(plan)}
                 </span>
-                <span className="text-gray-500 text-sm">/{isYearly ? 'año' : 'mes'}</span>
+                <span className="text-white/20 text-xs font-black uppercase tracking-widest ml-1">
+                  / {isYearly ? 'Año' : 'Mes'}
+                </span>
               </div>
             </div>
 
-            <ul className="space-y-4 mb-8">
+            <ul className="space-y-4 mb-10">
               {plan.features.map((feature, i) => (
-                <li key={i} className="flex items-center gap-3 text-sm text-gray-300">
-                  <Check size={16} className="text-[#00ff88]" />
-                  {feature}
+                <li key={i} className="flex items-center gap-3">
+                  <div className="w-5 h-5 rounded-full bg-[#00ff88]/10 flex items-center justify-center text-[#00ff88]">
+                    <Check size={12} strokeWidth={4} />
+                  </div>
+                  <span className="text-xs font-bold text-white/40 uppercase tracking-tight">{feature}</span>
                 </li>
               ))}
             </ul>
@@ -167,16 +176,20 @@ const MobilePricing = () => {
             <button
               onClick={() => handleCheckout(plan.id)}
               disabled={loadingPlan === plan.id}
-              className={`w-full h-14 rounded-2xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 ${
+              className={cn(
+                "w-full h-16 rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] transition-all active:scale-95 flex items-center justify-center gap-3",
                 plan.popular
-                  ? 'bg-[#00d4ff] text-[#070B14] shadow-[0_0_20px_#00d4ff44]'
+                  ? 'bg-[#00d4ff] text-[#070B14] shadow-[0_12px_30px_rgba(0,212,255,0.3)]'
                   : 'bg-white/5 border border-white/10 text-white hover:bg-white/10'
-              }`}
+              )}
             >
               {loadingPlan === plan.id ? (
-                <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                <div className="w-6 h-6 border-3 border-current border-t-transparent rounded-full animate-spin" />
               ) : (
-                plan.button
+                <>
+                  <span>Elegir Plan</span>
+                  <ArrowRight size={16} strokeWidth={3} />
+                </>
               )}
             </button>
           </motion.div>

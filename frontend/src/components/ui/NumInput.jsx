@@ -13,48 +13,25 @@ export default function NumInput({ label, value, onChange, min = 0, max = 100 })
   };
 
   return (
-    <div className="input-wrapper">
-      <label className="input-label">{label}</label>
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        border: '1px solid var(--border-subtle)', 
-        borderRadius: 'var(--radius-md)',
-        overflow: 'hidden',
-        height: 44,
-        background: 'var(--bg-card)'
-      }}>
+    <div className="space-y-2">
+      <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">{label}</label>
+      <div className="flex items-center bg-zinc-900/50 border border-white/5 rounded-xl overflow-hidden h-12">
         <button 
           type="button" 
           onClick={handleMinus}
-          style={{ 
-            width: 44, height: '100%', border: 'none', background: 'transparent', 
-            cursor: 'pointer', color: 'var(--text-tertiary)', transition: 'all 0.2s',
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}
-          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
+          className="w-12 h-full flex items-center justify-center text-zinc-500 hover:text-white hover:bg-white/5 transition-all"
         >
-          <Minus size={16} />
+          <Minus size={14} />
         </button>
-        <div style={{ 
-          flex: 1, textAlign: 'center', fontFamily: 'DM Sans', fontSize: 15, 
-          fontWeight: 600, color: 'var(--text-primary)' 
-        }}>
+        <div className="flex-1 text-center font-black text-sm text-white">
           {numValue}
         </div>
         <button 
           type="button" 
           onClick={handlePlus}
-          style={{ 
-            width: 44, height: '100%', border: 'none', background: 'transparent', 
-            cursor: 'pointer', color: 'var(--text-tertiary)', transition: 'all 0.2s',
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}
-          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-tertiary)'}
+          className="w-12 h-full flex items-center justify-center text-zinc-500 hover:text-white hover:bg-white/5 transition-all"
         >
-          <Plus size={16} />
+          <Plus size={14} />
         </button>
       </div>
     </div>

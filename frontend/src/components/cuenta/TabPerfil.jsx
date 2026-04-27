@@ -1,7 +1,8 @@
 import React from 'react';
 import AvatarUpload from './AvatarUpload';
-import { Upload } from 'lucide-react';
+import { Upload, User, Building2, Globe, Phone, Mail, FileText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { cn } from '../../lib/utils';
 
 export default function TabPerfil({ profileData, onUpdate }) {
   const { user } = useAuth();
@@ -10,168 +11,186 @@ export default function TabPerfil({ profileData, onUpdate }) {
   const badgeClass = planName.toUpperCase() === 'PRO' ? 'badge-accent' : 'badge-info';
 
   const uploadToCloudinary = async (file) => {
-    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
-
-    console.log('Cloudinary config:', { cloudName, uploadPreset });
-
-    if (!cloudName || cloudName === 'tu_cloud_name') {
-      throw new Error('VITE_CLOUDINARY_CLOUD_NAME no está configurado en .env');
-    }
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dpqgbgilw';
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'leadbook_preset';
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('upload_preset', uploadPreset || 'leadbook_preset');
+    formData.append('upload_preset', uploadPreset);
 
-    const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
-    console.log('Subiendo a:', url);
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, { 
+      method: 'POST', 
+      body: formData 
+    });
 
-    const res = await fetch(url, { method: 'POST', body: formData });
-
-    if (!res.ok) {
-      const errJson = await res.json().catch(() => ({}));
-      console.error('Cloudinary error response:', errJson);
-      throw new Error(errJson?.error?.message || `HTTP ${res.status}`);
-    }
-
+    if (!res.ok) throw new Error('Error al subir a la nube');
     const data = await res.json();
-    console.log('Upload OK, url:', data.secure_url);
     return data.secure_url;
   };
 
   const handleLogoUpload = async (e) => {
-    const file = e.target.files ? e.target.files[0] : null;
+    const file = typeof e === 'object' && e.target ? e.target.files?.[0] : e;
     if (file) {
-      // Mostrar preview inmediato
       const blobUrl = URL.createObjectURL(file);
       onUpdate('logoUrl', blobUrl);
-      
       try {
         const url = await uploadToCloudinary(file);
         onUpdate('logoUrl', url);
       } catch (err) {
-        console.error('Error subiendo logo:', err);
-        alert(`Error subiendo logo: ${err.message}`);
+        console.error("Cloudinary Error:", err);
       }
     }
   };
 
-  const handleAvatarUpload = async (file) => {
-    const blobUrl = URL.createObjectURL(file);
-    onUpdate('avatar', blobUrl);
-    try {
-      const url = await uploadToCloudinary(file);
-      onUpdate('avatar', url);
-    } catch (err) {
-      console.error('Error subiendo avatar:', err);
-      alert(`Error subiendo avatar: ${err.message}`);
-    }
-  };
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }} className="animate-fade-in-up">
-      {/* Sección Identidad */}
-      <div className="card">
-        <div className="text-label" style={{ marginBottom: 24 }}>IDENTIDAD</div>
-        
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+    <div className="flex flex-col gap-8 animate-fade-in-up pb-20">
+      
+      {/* SECCIÓN 1: IDENTIDAD PERSONAL */}
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 md:p-8">
+        <div className="flex flex-col md:flex-row items-center md:items-start gap-8 mb-10">
           <AvatarUpload 
             src={profileData?.logoUrl || user?.agencyLogo || profileData?.logo_url} 
             nombre={profileData?.nombre} 
-            onUpload={(file) => handleLogoUpload({ target: { files: [file] } })} 
+            onUpload={handleLogoUpload} 
           />
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: 18, fontWeight: 600 }}>{profileData?.nombre || 'Usuario'}</span>
-              <span className={`badge ${badgeClass}`}>{badgeTitle}</span>
+          <div className="text-center md:text-left flex flex-col items-center md:items-start">
+            <div className="flex items-center gap-3 mb-2">
+              <h3 className="text-xl font-bold text-white">{profileData?.nombre || 'Usuario'}</h3>
+              <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border", 
+                planName.toLowerCase() === 'pro' ? "bg-purple-500/10 text-purple-400 border-purple-500/20" : "bg-white/10 text-white/50 border-white/10"
+              )}>
+                {badgeTitle}
+              </span>
             </div>
-            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 4 }}>
-              {profileData?.email || ''}
-            </div>
+            <p className="text-white/40 text-sm">{profileData?.email}</p>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 16, '@media (max-width: 640px)': { gridTemplateColumns: '1fr' } }}>
-          <div className="input-wrapper">
-            <label className="input-label">Nombre Completo <span className="required">*</span></label>
-            <input className="input" value={profileData?.nombre || ''} onChange={e => onUpdate('nombre', e.target.value)} />
-          </div>
-          <div className="input-wrapper">
-            <label className="input-label">Email <span className="required">*</span></label>
-            <input type="email" className="input" value={profileData?.email || ''} onChange={e => onUpdate('email', e.target.value)} />
-          </div>
-          <div className="input-wrapper">
-            <label className="input-label">Teléfono</label>
-            <input className="input" placeholder="+54 11 1234-5678" value={profileData?.telefono || ''} onChange={e => onUpdate('telefono', e.target.value)} />
-          </div>
-          <div className="input-wrapper">
-            <label className="input-label">País</label>
-            <select className="input select" value={profileData?.pais || ''} onChange={e => onUpdate('pais', e.target.value)}>
-              <option value="">Seleccionar país...</option>
-              <option value="Argentina">Argentina</option>
-              <option value="México">México</option>
-              <option value="Colombia">Colombia</option>
-              <option value="Chile">Chile</option>
-              <option value="Uruguay">Uruguay</option>
-              <option value="España">España</option>
-              <option value="Otro">Otro</option>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <ProfileInput 
+            label="Nombre Completo" 
+            icon={<User size={14} />} 
+            value={profileData?.nombre || ''} 
+            onChange={val => onUpdate('nombre', val)} 
+          />
+          <ProfileInput 
+            label="Correo Electrónico" 
+            icon={<Mail size={14} />} 
+            value={profileData?.email || ''} 
+            onChange={val => onUpdate('email', val)} 
+          />
+          <ProfileInput 
+            label="Teléfono" 
+            icon={<Phone size={14} />} 
+            placeholder="+54 9..."
+            value={profileData?.telefono || ''} 
+            onChange={val => onUpdate('telefono', val)} 
+          />
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] uppercase tracking-widest font-bold text-white/40">País / Región</label>
+            <select 
+              className="w-full h-11 px-4 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:border-[#00d4ff] outline-none transition-all"
+              value={profileData?.pais || ''} 
+              onChange={e => onUpdate('pais', e.target.value)}
+            >
+              <option value="" className="bg-[#070B14]">Seleccionar...</option>
+              <option value="Argentina" className="bg-[#070B14]">Argentina</option>
+              <option value="México" className="bg-[#070B14]">México</option>
+              <option value="Colombia" className="bg-[#070B14]">Colombia</option>
+              <option value="Chile" className="bg-[#070B14]">Chile</option>
+              <option value="España" className="bg-[#070B14]">España</option>
             </select>
           </div>
         </div>
       </div>
 
-      {/* Sección Agencia */}
-      <div className="card">
-        <div className="text-label">DATOS DE LA AGENCIA</div>
-        <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 16 }}>Estos datos aparecen en los listados y PDF generados</p>
-        
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 16, marginBottom: 16 }}>
-          <div className="input-wrapper">
-            <label className="input-label">Nombre de la Agencia</label>
-            <input className="input" placeholder="Ej: Inmobiliaria Premium" value={profileData?.nombreInmobiliaria || ''} onChange={e => onUpdate('nombreInmobiliaria', e.target.value)} />
-          </div>
-          <div className="input-wrapper">
-            <label className="input-label">Sitio Web</label>
-            <input type="url" className="input" placeholder="https://..." value={profileData?.sitioWeb || ''} onChange={e => onUpdate('sitioWeb', e.target.value)} />
+      {/* SECCIÓN 2: DATOS DE LA AGENCIA */}
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-6 md:p-8">
+        <div className="mb-8">
+          <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+            <Building2 size={16} className="text-[#00d4ff]" />
+            Datos de la Agencia
+          </h3>
+          <p className="text-white/30 text-xs mt-1">Se usará en tus PDF y listados generados.</p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <ProfileInput 
+            label="Nombre Inmobiliaria" 
+            icon={<Building2 size={14} />} 
+            placeholder="Tu negocio"
+            value={profileData?.nombreInmobiliaria || profileData?.nombre_inmobiliaria || ''} 
+            onChange={val => onUpdate('nombreInmobiliaria', val)} 
+          />
+          <ProfileInput 
+            label="Sitio Web" 
+            icon={<Globe size={14} />} 
+            placeholder="www.tuweb.com"
+            value={profileData?.sitioWeb || profileData?.sitio_web || ''} 
+            onChange={val => onUpdate('sitioWeb', val)} 
+          />
+        </div>
+
+        <div className="flex flex-col gap-2 mb-8">
+          <label className="text-[10px] uppercase tracking-widest font-bold text-white/40">Biografía / Descripción</label>
+          <div className="relative">
+            <FileText size={14} className="absolute left-4 top-4 text-white/20" />
+            <textarea 
+              className="w-full min-h-[120px] pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:border-[#00d4ff] outline-none transition-all resize-none"
+              placeholder="Contanos sobre tu inmobiliaria..."
+              value={profileData?.bio || ''} 
+              onChange={e => onUpdate('bio', e.target.value)} 
+            />
           </div>
         </div>
 
-        <div className="input-wrapper" style={{ marginBottom: 16 }}>
-          <label className="input-label">Descripción / Bio</label>
-          <textarea className="textarea" rows={3} placeholder="Breve descripción de la agencia o agente..." value={profileData?.bio || ''} onChange={e => onUpdate('bio', e.target.value)} />
-        </div>
-
-        <div className="input-wrapper">
-          <label className="input-label">Logo de la Agencia</label>
-          
-          <div style={{ 
-            height: 80, width: '100%', 
-            border: profileData?.logoUrl ? '1px solid var(--border-subtle)' : '1px dashed var(--border-strong)',
-            borderRadius: 'var(--radius-md)',
-            background: profileData?.logoUrl ? 'var(--bg-surface)' : 'rgba(255,255,255,0.02)',
-            display: 'flex', alignItems: 'center', justifyContent: profileData?.logoUrl ? 'space-between' : 'center',
-            padding: profileData?.logoUrl ? '0 16px' : 0,
-            position: 'relative', overflow: 'hidden'
-          }}>
-            {profileData?.logoUrl ? (
-              <>
-                <div style={{ height: 48, display: 'flex', alignItems: 'center', background: '#fff', borderRadius: 4, padding: 4 }}>
-                  <img src={profileData.logoUrl} alt="Logo" style={{ maxHeight: '100%', maxWidth: 200, objectFit: 'contain' }} />
+        <div className="flex flex-col gap-2">
+          <label className="text-[10px] uppercase tracking-widest font-bold text-white/40">Logo Institucional</label>
+          <div className="mt-2 p-6 rounded-xl border border-dashed border-white/10 bg-white/[0.02] flex flex-col items-center gap-4">
+            {(profileData?.logoUrl || profileData?.logo_url) ? (
+              <div className="flex flex-col sm:flex-row items-center gap-6">
+                <div className="h-16 w-32 px-4 py-2 bg-white rounded-lg flex items-center justify-center">
+                  <img 
+                    src={profileData?.logoUrl || profileData?.logo_url} 
+                    alt="Logo preview" 
+                    className="max-h-full max-w-full object-contain" 
+                  />
                 </div>
-                <label style={{ cursor: 'pointer' }} className="btn btn-secondary btn-sm">
-                  Cambiar
-                  <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} />
+                <label className="px-4 py-2 rounded-lg bg-white/10 text-white text-xs font-bold hover:bg-white/20 transition-all cursor-pointer">
+                  Cambiar Logo
+                  <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
                 </label>
-              </>
+              </div>
             ) : (
-              <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, cursor: 'pointer', width: '100%', height: '100%', justifyContent: 'center' }}>
-                <Upload size={14} color="var(--text-tertiary)" />
-                <span style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Subir logo (PNG o SVG recomendado)</span>
-                <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleLogoUpload} />
+              <label className="flex flex-col items-center gap-3 cursor-pointer group">
+                <div className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-all">
+                  <Upload size={20} className="text-white/20 group-hover:text-[#00d4ff]" />
+                </div>
+                <span className="text-xs text-white/30 group-hover:text-white/50 transition-all">Subir logo (PNG recomendado)</span>
+                <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
               </label>
             )}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ProfileInput({ label, icon, value, onChange, placeholder = "" }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-[10px] uppercase tracking-widest font-bold text-white/40">{label}</label>
+      <div className="relative">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20">
+          {icon}
+        </div>
+        <input 
+          className="w-full h-11 pl-10 pr-4 bg-white/5 border border-white/10 rounded-xl text-sm text-white focus:border-[#00d4ff] outline-none transition-all"
+          placeholder={placeholder}
+          value={value} 
+          onChange={e => onChange(e.target.value)} 
+        />
       </div>
     </div>
   );

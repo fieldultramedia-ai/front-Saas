@@ -1,5 +1,8 @@
 "use client";
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { crearPreferenciaMP } from '../../services/api';
 import { cn } from "@/lib/utils";
 import NumberFlow from "@number-flow/react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -145,9 +148,43 @@ const ToggleGroup = ({ options, active, onChange }) => (
 );
 
 export default function PricingSection() {
+  const pricingRef = useRef(null);
   const [isYearly, setIsYearly] = useState(false);
   const [isCurrency, setIsCurrency] = useState('USD');
-  const pricingRef = useRef(null);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [loadingPlan, setLoadingPlan] = useState(null);
+
+  const handleSelectPlan = async (planId) => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    if (planId === 'free') {
+      // Si es free y ya está logueado, probablemente no necesite hacer nada o redirigir al dashboard
+      navigate('/dashboard');
+      return;
+    }
+
+    if (planId === 'business') {
+      window.location.href = 'mailto:ventas@leadbook.app';
+      return;
+    }
+
+    setLoadingPlan(planId);
+    try {
+      const data = await crearPreferenciaMP(planId);
+      if (data.init_point) {
+        window.location.href = data.init_point;
+      }
+    } catch (err) {
+      console.error("Error al iniciar pago:", err);
+      alert("Hubo un error al iniciar el proceso de pago. Por favor intenta de nuevo.");
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
 
   const getPrice = (plan) => {
     if (plan.id === 'business') return 'Custom';
@@ -159,7 +196,7 @@ export default function PricingSection() {
   };
 
   return (
-    <section id="precios" className="relative w-full h-full bg-[#070B14] overflow-hidden" ref={pricingRef}>
+    <section id="precios" className="relative w-full bg-[#070B14]" ref={pricingRef}>
       {/* Background Effects */}
       <div className="absolute inset-0 pointer-events-none">
         <TimelineContent
@@ -178,7 +215,7 @@ export default function PricingSection() {
         </TimelineContent>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 md:px-6 flex flex-col h-full overflow-hidden scrollbar-hide py-4 sm:py-6 md:py-8 pt-20 sm:pt-24 md:pt-32">
+      <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 md:px-6 flex flex-col py-4 sm:py-6 md:py-8 pt-20 sm:pt-24 md:pt-32">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -239,8 +276,14 @@ export default function PricingSection() {
                         "w-full rounded-lg text-xs font-bold transition-all duration-300",
                         plan.id === 'starter' && "bg-[#00d4ff] text-black hover:bg-[#00d4ff]/90 border-none"
                       )}
+                      onClick={() => handleSelectPlan(plan.id)}
+                      disabled={loadingPlan !== null}
                     >
-                      {plan.button}
+                      {loadingPlan === plan.id ? (
+                        <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        plan.button
+                      )}
                     </Button>
                   </PricingTablePlan>
                 </th>

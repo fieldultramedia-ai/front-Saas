@@ -121,13 +121,13 @@ const MobileHero = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, delay: 0.2 }}
-        className="z-10 mb-3 text-center"
+        className="z-10 mb-4 text-center"
       >
         <span
-          className="animated-shiny-text font-['Syne'] font-extrabold tracking-[-0.04em] leading-none"
-          style={{ fontSize: '3.2rem' }}
+          className="animated-shiny-text font-['Syne'] font-black tracking-[-0.04em] leading-none uppercase italic"
+          style={{ fontSize: '4.5rem' }}
         >
-          LeadBook
+          LEADBOOK
         </span>
       </motion.div>
 
@@ -136,11 +136,11 @@ const MobileHero = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.35 }}
-        className="z-10 text-center font-['Syne'] font-extrabold leading-[1.15] tracking-tight mb-5 max-w-[320px]"
-        style={{ fontSize: '1.85rem' }}
+        className="z-10 text-center font-['Syne'] font-black leading-[0.95] tracking-tighter mb-6 max-w-[340px] uppercase italic"
+        style={{ fontSize: '2.5rem' }}
       >
         <span className="animated-shiny-text">
-          Convertí cualquier producto en contenido que atrae clientes
+          TU CONTENIDO,<br/>SIN LÍMITES.
         </span>
       </motion.h1>
 
@@ -149,9 +149,9 @@ const MobileHero = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.5 }}
-        className="z-10 text-center text-gray-400 text-sm leading-relaxed mb-9 max-w-[290px]"
+        className="z-10 text-center text-white/30 text-[10px] font-black uppercase tracking-[0.3em] mb-12 max-w-[280px] leading-relaxed"
       >
-        Automatizá tu marketing con IA. Crea materiales premium en segundos, sin complicaciones.
+        Dominá el mercado inmobiliario con la potencia de la Inteligencia Artificial.
       </motion.p>
 
       {/* ══ CTA BUTTONS ══ */}

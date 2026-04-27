@@ -1,25 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { User, Shield, CreditCard, Link2 } from 'lucide-react';
+import { User, Shield, CreditCard, Link2, Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useLocation } from 'react-router-dom';
 import { API_BASE_URL, getPerfil } from '../services/api';
 import { ErrorState } from '../components/results/helpers';
 import ResultSkeleton from '../components/results/ResultSkeleton';
+import { cn } from '../lib/utils';
 
 import TabPerfil from '../components/cuenta/TabPerfil';
 import TabSeguridad from '../components/cuenta/TabSeguridad';
 import TabPlan from '../components/cuenta/TabPlan';
 import TabConexiones from '../components/cuenta/TabConexiones';
+import TabSettings from '../components/cuenta/TabSettings';
 import SaveBar from '../components/cuenta/SaveBar';
 
 const TABS = [
   { id: 'perfil',      label: 'Perfil',      icon: User },
+  { id: 'ajustes',     label: 'Ajustes',     icon: Settings },
   { id: 'seguridad',   label: 'Seguridad',   icon: Shield },
-  { id: 'plan',        label: 'Plan',        icon: CreditCard },
+  { id: 'suscripcion', label: 'Suscripción', icon: CreditCard },
 ];
 
 export default function CuentaPage() {
   const { updateProfile } = useAuth();
-  const [activeTab, setActiveTab] = useState('perfil');
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const initialTabFromUrl = searchParams.get('tab');
+  const initialTab = initialTabFromUrl || 'perfil';
+  
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,6 +52,7 @@ export default function CuentaPage() {
       updateProfile({
         name: data.nombre,
         email: data.email,
+        telefono: data.telefono,
         agencyName: data.nombre_inmobiliaria,
         agencyLogo: data.logo_url
       });
@@ -105,6 +115,7 @@ export default function CuentaPage() {
         sitio_web: profileData.sitioWeb || profileData.sitio_web,
         bio: profileData.bio,
         logo_url: profileData.logoUrl || profileData.logo_url,
+        settings: profileData.settings
       };
 
       const res = await fetch(`${API_BASE_URL}/auth/perfil/`, {
@@ -127,6 +138,7 @@ export default function CuentaPage() {
       updateProfile({
         name: newSaved.nombre,
         email: newSaved.email,
+        telefono: newSaved.telefono,
         agencyName: newSaved.nombre_inmobiliaria,
         agencyLogo: newLogo
       });
@@ -147,20 +159,20 @@ export default function CuentaPage() {
   };
 
   return (
-    <div style={{ maxWidth: 860, margin: '0 auto', padding: '40px 24px 80px', position: 'relative' }}>
+    <div className="max-w-4xl mx-auto px-6 py-10 md:py-16 relative">
 
-      <div style={{ marginBottom: 32 }}>
-        <h1 className="text-h2" style={{ marginBottom: 4, color: 'var(--text-primary)' }}>Mi Cuenta</h1>
-        <p className="text-body text-secondary">
-          {profileData?.email || 'Ajustes y configuración'}
+      <div className="mb-10">
+        <h1 className="text-3xl font-black text-white tracking-tighter uppercase italic mb-2">Mi Cuenta</h1>
+        <p className="text-white/40 text-sm font-light">
+          {activeTab === 'perfil' && (profileData?.email || 'Información personal y de agencia')}
+          {activeTab === 'ajustes' && 'Preferencias de la plataforma y notificaciones'}
+          {activeTab === 'seguridad' && 'Protegé tu cuenta y cambiá tu contraseña'}
+          {activeTab === 'suscripcion' && 'Detalles de tu suscripción y facturación'}
         </p>
       </div>
 
-      <div style={{ marginBottom: 32 }}>
-        <div style={{
-          display: 'flex', gap: 4, background: 'var(--bg-card)', padding: 4,
-          borderRadius: 'var(--radius-full)', width: 'fit-content'
-        }}>
+      <div className="mb-10 overflow-x-auto scrollbar-hide">
+        <div className="flex gap-1 p-1 bg-white/5 border border-white/5 rounded-2xl w-fit">
           {TABS.map(tab => {
             const active = activeTab === tab.id;
             const Icon = tab.icon;
@@ -168,18 +180,14 @@ export default function CuentaPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8, padding: '8px 20px',
-                  border: 'none', borderRadius: 'var(--radius-full)', cursor: 'pointer',
-                  background: active ? 'var(--accent)' : 'transparent',
-                  color: active ? '#070B14' : 'var(--text-secondary)',
-                  fontWeight: active ? 600 : 400,
-                  transition: 'all 0.15s ease'
-                }}
-                onMouseEnter={e => { if(!active) e.currentTarget.style.color = 'var(--text-primary)' }}
-                onMouseLeave={e => { if(!active) e.currentTarget.style.color = 'var(--text-secondary)' }}
+                className={cn(
+                  "flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all duration-200 whitespace-nowrap",
+                  active 
+                    ? "bg-[#00d4ff] text-[#070B14] shadow-[0_4px_12px_rgba(0,212,255,0.2)]" 
+                    : "text-white/40 hover:text-white hover:bg-white/5"
+                )}
               >
-                <Icon size={16} /> {tab.label}
+                <Icon size={14} /> {tab.label}
               </button>
             )
           })}
@@ -198,6 +206,12 @@ export default function CuentaPage() {
               onUpdate={handleUpdate}
             />
           )}
+          {activeTab === 'ajustes' && (
+            <TabSettings
+              profileData={profileData}
+              onUpdate={handleUpdate}
+            />
+          )}
           {activeTab === 'seguridad' && (
             <TabSeguridad
               onSave={(payload) => handleSave(payload, 'password')}
@@ -206,7 +220,7 @@ export default function CuentaPage() {
               saveSuccess={saveSuccess}
             />
           )}
-          {activeTab === 'plan' && (
+          {activeTab === 'suscripcion' && (
             <TabPlan
               profileData={profileData}
             />
@@ -216,7 +230,7 @@ export default function CuentaPage() {
 
       {/* SaveBar (Solo en TabPerfil si hay cambios) */}
       <SaveBar
-        visible={activeTab === 'perfil' && (isDirty || saveError || saveSuccess)}
+        visible={(activeTab === 'perfil' || activeTab === 'ajustes') && (isDirty || saveError || saveSuccess)}
         saving={saving}
         onSave={() => handleSave(profileData)}
         onDiscard={handleDiscard}

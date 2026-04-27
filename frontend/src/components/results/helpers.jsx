@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
 
 export function HeaderTab({ icon: Icon, title, subtitle, actions, accentColor }) {
@@ -20,38 +21,49 @@ export function HeaderTab({ icon: Icon, title, subtitle, actions, accentColor })
   );
 }
 
-import { Link } from 'react-router-dom';
-
 export function ErrorState({ error, onRetry, label, isLimitError }) {
   const isLimit = isLimitError || (error && error.isLimit);
 
   if (isLimit) {
     return (
-      <div style={{ padding: 40, background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
-        <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(245, 166, 35, 0.1)', color: '#F5A623', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-          <AlertCircle size={24} />
+      <div className="relative overflow-hidden p-10 bg-zinc-900/40 border border-yellow-500/20 rounded-[32px] backdrop-blur-md text-center group">
+        <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-transparent opacity-50" />
+        <div className="relative z-10">
+          <div className="w-16 h-16 rounded-2xl bg-yellow-500/10 text-yellow-500 flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(234,179,8,0.1)] border border-yellow-500/20 mx-auto">
+            <AlertCircle size={32} />
+          </div>
+          <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">Alcanzaste el límite de tu plan</h3>
+          <p className="text-zinc-400 max-w-sm mx-auto mb-8 leading-relaxed">
+            Expandí tu plan para seguir aprovechando la potencia de la IA y escalar tu negocio inmobiliario.
+          </p>
+          <Link to="/precios" className="inline-flex items-center gap-2 px-8 py-4 bg-yellow-500 text-black font-bold rounded-2xl hover:bg-yellow-400 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-yellow-500/20">
+            Actualizar plan
+          </Link>
         </div>
-        <h3 className="text-h4" style={{ marginBottom: 8 }}>Alcanzaste el límite de tu plan</h3>
-        <p className="text-body-sm text-secondary" style={{ marginBottom: 24 }}>Expandí tu plan para seguir generando contenido con IA y conseguir más clientes.</p>
-        <Link to="/precios" className="btn btn-primary">
-          Actualizar plan
-        </Link>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: 40, background: 'var(--bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-subtle)', textAlign: 'center' }}>
-      <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--error-dim)', color: 'var(--error)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-        <AlertCircle size={24} />
+    <div className="relative overflow-hidden p-12 bg-zinc-900/40 border border-zinc-800 rounded-[32px] backdrop-blur-md text-center">
+      <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 via-transparent to-transparent opacity-30" />
+      <div className="relative z-10">
+        <div className="w-16 h-16 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center mb-6 border border-red-500/20 mx-auto">
+          <AlertCircle size={32} />
+        </div>
+        <h3 className="text-2xl font-bold text-white mb-3 tracking-tight">Error al cargar {label}</h3>
+        <p className="text-zinc-500 max-w-md mx-auto mb-8 leading-relaxed">
+          {error?.message || 'No pudimos conectar con el servidor. Por favor, verifica tu conexión o intenta de nuevo.'}
+        </p>
+        {onRetry && (
+          <button 
+            className="px-8 py-4 bg-zinc-800 hover:bg-zinc-700 text-white font-semibold rounded-2xl transition-all border border-zinc-700 hover:border-zinc-600 flex items-center gap-2 mx-auto"
+            onClick={onRetry}
+          >
+            Reintentar conexión
+          </button>
+        )}
       </div>
-      <h3 className="text-h4" style={{ marginBottom: 8 }}>Error al generar {label}</h3>
-      <p className="text-body-sm text-secondary" style={{ marginBottom: 24 }}>{error?.message || 'Ocurrió un error inesperado al conectar con el servidor.'}</p>
-      {onRetry && (
-        <button className="btn btn-secondary" onClick={onRetry}>
-          Reintentar
-        </button>
-      )}
     </div>
   );
 }

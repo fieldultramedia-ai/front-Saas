@@ -208,6 +208,10 @@ body {
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-blur: blur(12px);
 
+  /* Inputs */
+  --bg-input: #05070a;
+  --bg-input-hover: #0a0c11;
+
   /* Premium Shadows */
   --shadow-premium: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
   --shadow-accent: 0 0 20px rgba(0, 212, 255, 0.15);

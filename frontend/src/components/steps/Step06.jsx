@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useFormContext } from '../../context/FormContext';
-import { Upload, X, RotateCcw, GripVertical } from 'lucide-react';
+import { Upload, X, RotateCcw, Image as ImageIcon, Sparkles, Camera, FileText, ArrowRight, ArrowLeft, Check } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Step06({ onNext, onPrev }) {
   const { formData, updateFormData } = useFormContext();
@@ -9,17 +10,11 @@ export default function Step06({ onNext, onPrev }) {
 
   useEffect(() => {
     const escenas = formData.escenas || [];
-    
-    // Si no hay portada cargada, usar la foto de la primera escena
     if (!formData.portadaUrl && escenas[0]?.fotoUrl) {
       updateFormData({ portadaUrl: escenas[0].fotoUrl });
     }
-    
-    // Si no hay fotos del recorrido, usar las fotos de todas las escenas
     if (!formData.fotosRecorrido || formData.fotosRecorrido.length === 0) {
-      const fotosDeEscenas = escenas
-        .map(e => e.fotoUrl)
-        .filter(Boolean);
+      const fotosDeEscenas = escenas.map(e => e.fotoUrl).filter(Boolean);
       if (fotosDeEscenas.length > 0) {
         updateFormData({ fotosRecorrido: fotosDeEscenas });
       }
@@ -28,8 +23,8 @@ export default function Step06({ onNext, onPrev }) {
 
   const handlePortada = (file) => {
     if (!file) return;
-    const MAX_W = 800;
-    const QUALITY = 0.7;
+    const MAX_W = 1200;
+    const QUALITY = 0.8;
     const img = new Image();
     const url = URL.createObjectURL(file);
     img.onload = () => {
@@ -51,8 +46,8 @@ export default function Step06({ onNext, onPrev }) {
     let acumuladas = [...current];
     
     nuevas.forEach(file => {
-      const MAX_W = 800;
-      const QUALITY = 0.7;
+      const MAX_W = 1000;
+      const QUALITY = 0.75;
       const img = new Image();
       const url = URL.createObjectURL(file);
       img.onload = () => {
@@ -76,123 +71,153 @@ export default function Step06({ onNext, onPrev }) {
   };
 
   const formatos = [
-    { key: 'generarStory',    label: 'Instagram Story (1080×1920)' },
-    { key: 'generarCarrusel', label: 'Carrusel Instagram (5-7 slides)' },
+    { key: 'generarStory',    label: 'Instagram Story', desc: '1080×1920 px', icon: <Camera size={18} /> },
+    { key: 'generarCarrusel', label: 'Carrusel Social', desc: '5-7 Slides', icon: <Sparkles size={18} /> },
   ];
 
   return (
-    <div>
-      <div style={{ marginBottom: 36 }}>
-        <span className="text-label" style={{ color: 'var(--accent)', marginBottom: 8, display: 'block' }}>PASO 06</span>
-        <h2 className="text-h2" style={{ marginBottom: 8 }}>Fotos y formatos</h2>
-        <p style={{ fontFamily: 'DM Sans', fontSize: 15, color: 'var(--text-secondary)' }}>
-          Imágenes para PDF, video e Instagram
-        </p>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 24 }}>
-        {/* Portada */}
-        <div>
-          <label className="input-label" style={{ marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
-            PORTADA
-            <span className="badge badge-accent" style={{ fontSize: 9 }}>Principal</span>
-          </label>
-          <p style={{ fontFamily: 'DM Sans', fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 10 }}>
-            Imagen principal del PDF y video
-          </p>
-          {formData.portadaUrl ? (
-            <div style={{ position: 'relative', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-              <img src={formData.portadaUrl} alt="portada"
-                style={{ width: '100%', height: 200, objectFit: 'cover' }} />
-              <div style={{ position: 'absolute', top: 8, right: 8, display: 'flex', gap: 6 }}>
-                <button onClick={() => portadaRef.current?.click()} style={{ width: 28, height: 28, borderRadius: 'var(--radius-sm)', background: 'rgba(7,11,20,0.8)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <RotateCcw size={12} color="white" />
-                </button>
-                <button onClick={() => updateFormData({ portadaUrl: null })} style={{ width: 28, height: 28, borderRadius: 'var(--radius-sm)', background: 'rgba(7,11,20,0.8)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <X size={12} color="white" />
-                </button>
-              </div>
-            </div>
-          ) : (
-            <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 200, border: '2px dashed var(--border-default)', borderRadius: 'var(--radius-lg)', cursor: 'pointer', gap: 10, transition: 'all 0.15s', background: 'var(--bg-card)' }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.background = 'var(--accent-dim)'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-default)'; e.currentTarget.style.background = 'var(--bg-card)'; }}>
-              <Upload size={24} color="var(--text-tertiary)" />
-              <span style={{ fontFamily: 'DM Sans', fontSize: 13, color: 'var(--text-secondary)' }}>Subir portada</span>
-              <span style={{ fontFamily: 'DM Sans', fontSize: 11, color: 'var(--text-tertiary)' }}>JPG, PNG hasta 10MB</span>
-              <input type="file" accept="image/*" style={{ display: 'none' }} ref={portadaRef}
-                onChange={e => handlePortada(e.target.files[0])} />
-            </label>
-          )}
-          <input type="file" accept="image/*" style={{ display: 'none' }} ref={portadaRef}
-            onChange={e => handlePortada(e.target.files[0])} />
+    <div className="w-full max-w-3xl mx-auto">
+      <header className="mb-12">
+        <div className="flex items-center gap-3 mb-4">
+           <div className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] font-black uppercase tracking-widest">
+             Paso 06
+           </div>
+           <div className="h-px flex-1 bg-gradient-to-r from-blue-500/20 to-transparent" />
         </div>
+        <h1 className="text-3xl font-black font-syne text-white mb-3 italic tracking-tighter uppercase">
+          Fotos y Formatos
+        </h1>
+        <p className="text-zinc-400 text-sm">
+          Cargá las mejores imágenes para el PDF profesional y seleccioná los formatos extra para tus redes.
+        </p>
+      </header>
 
-        {/* Fotos recorrido */}
-        <div>
-          <label className="input-label" style={{ marginBottom: 10, display: 'block' }}>
-            FOTOS DEL RECORRIDO
-          </label>
-          <p style={{ fontFamily: 'DM Sans', fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 10 }}>
-            Mín. 4, máx. 9 — ordenalas en secuencia del tour
-          </p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-            {/* Fotos subidas */}
-            {(formData.fotosRecorrido || []).map((foto, idx) => (
-              <div key={idx} style={{ position: 'relative', borderRadius: 'var(--radius-sm)', overflow: 'hidden' }}>
-                <img src={foto} alt={`foto ${idx + 1}`}
-                  style={{ width: '100%', height: 80, objectFit: 'cover' }} />
-                <div style={{ position: 'absolute', top: 2, left: 4, fontFamily: 'Syne', fontSize: 10, fontWeight: 700, color: 'white', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>{idx + 1}</div>
-                <button onClick={() => removeRecorrido(idx)} style={{ position: 'absolute', top: 2, right: 2, width: 18, height: 18, borderRadius: '50%', background: 'rgba(7,11,20,0.8)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <X size={9} color="white" />
-                </button>
+      <div className="space-y-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Portada */}
+          <section className="space-y-4">
+            <label className="text-[11px] font-black text-zinc-500 uppercase tracking-[0.2em] flex items-center gap-2">
+              Portada Principal <span className="text-[9px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md">Opcional</span>
+            </label>
+            {formData.portadaUrl ? (
+              <div className="relative aspect-video rounded-3xl overflow-hidden group border border-white/10">
+                <img src={formData.portadaUrl} alt="portada" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                   <button onClick={() => portadaRef.current?.click()} className="p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-all">
+                     <RotateCcw size={18} />
+                   </button>
+                   <button onClick={() => updateFormData({ portadaUrl: null })} className="p-3 bg-red-500/10 hover:bg-red-500/20 rounded-full text-red-400 transition-all">
+                     <X size={18} />
+                   </button>
+                </div>
               </div>
-            ))}
-
-            {/* Agregar más */}
-            {(formData.fotosRecorrido || []).length < 9 && (
-              <label style={{ height: 80, border: '1px dashed var(--border-default)', borderRadius: 'var(--radius-sm)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: 4, transition: 'all 0.15s' }}
-                onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
-                onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-default)'}>
-                <Upload size={14} color="var(--text-tertiary)" />
-                <span style={{ fontFamily: 'DM Sans', fontSize: 10, color: 'var(--text-tertiary)' }}>Agregar</span>
-                <input type="file" accept="image/*" multiple style={{ display: 'none' }}
-                  onChange={e => handleFotosRecorrido(e.target.files)} />
+            ) : (
+              <label className="flex flex-col items-center justify-center aspect-video border-2 border-dashed border-white/5 bg-zinc-900/30 rounded-3xl cursor-pointer hover:border-blue-500/30 hover:bg-blue-500/5 transition-all group">
+                <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-600 mb-3 group-hover:text-blue-400 group-hover:bg-blue-400/10 transition-all">
+                  <Upload size={24} />
+                </div>
+                <span className="text-xs font-bold text-zinc-500 group-hover:text-zinc-300">Subir Portada</span>
+                <span className="text-[10px] text-zinc-600 mt-1">Recomendado 1920x1080</span>
+                <input type="file" accept="image/*" className="hidden" ref={portadaRef} onChange={e => handlePortada(e.target.files[0])} />
               </label>
             )}
-          </div>
+            <input type="file" accept="image/*" className="hidden" ref={portadaRef} onChange={e => handlePortada(e.target.files[0])} />
+          </section>
 
-          <div style={{ marginTop: 8, fontFamily: 'DM Sans', fontSize: 11, color: 'var(--text-tertiary)' }}>
-            {(formData.fotosRecorrido || []).length}/9 fotos
-          </div>
+          {/* Fotos recorrido */}
+          <section className="space-y-4">
+            <label className="text-[11px] font-black text-zinc-500 uppercase tracking-[0.2em] flex items-center justify-between">
+              Fotos del Recorrido 
+              <span className="text-[10px] text-zinc-600">{(formData.fotosRecorrido || []).length}/9</span>
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {(formData.fotosRecorrido || []).map((foto, idx) => (
+                <motion.div 
+                  layoutId={`recorrido-${idx}`}
+                  key={idx} 
+                  className="relative aspect-square rounded-xl overflow-hidden group border border-white/5"
+                >
+                  <img src={foto} alt={`foto ${idx + 1}`} className="w-full h-full object-cover" />
+                  <div className="absolute top-2 left-2 w-5 h-5 bg-black/60 backdrop-blur-md rounded-lg flex items-center justify-center text-[10px] font-black text-white">
+                    {idx + 1}
+                  </div>
+                  <button 
+                    onClick={() => removeRecorrido(idx)} 
+                    className="absolute top-1 right-1 p-1 bg-red-500/20 text-red-400 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    <X size={10} />
+                  </button>
+                </motion.div>
+              ))}
+
+              {(formData.fotosRecorrido || []).length < 9 && (
+                <label className="flex flex-col items-center justify-center aspect-square border-2 border-dashed border-white/5 bg-zinc-900/30 rounded-xl cursor-pointer hover:border-zinc-700 hover:bg-zinc-800 transition-all group">
+                  <Upload size={16} className="text-zinc-600 group-hover:text-zinc-400 transition-colors" />
+                  <input type="file" accept="image/*" multiple className="hidden" onChange={e => handleFotosRecorrido(e.target.files)} />
+                </label>
+              )}
+            </div>
+          </section>
         </div>
-      </div>
 
-      {/* Formatos adicionales */}
-      <div className="card" style={{ padding: '20px 24px', marginBottom: 24 }}>
-        <label className="input-label" style={{ marginBottom: 14, display: 'block' }}>FORMATOS ADICIONALES (OPCIONAL)</label>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {formatos.map(f => {
-            const isSelected = formData[f.key] || false;
-            return (
-              <label key={f.key} style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}
-                onClick={() => updateFormData({ [f.key]: !isSelected })}>
-                <div style={{ width: 20, height: 20, borderRadius: 4, border: isSelected ? 'none' : '1.5px solid var(--border-default)', background: isSelected ? 'var(--accent)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
-                  {isSelected && <svg width="10" height="8" viewBox="0 0 10 8"><path d="M1 4l3 3 5-6" stroke="#070B14" strokeWidth="2" fill="none" strokeLinecap="round"/></svg>}
-                </div>
-                <span style={{ fontFamily: 'DM Sans', fontSize: 14, color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)' }}>{f.label}</span>
-              </label>
-            );
-          })}
-        </div>
-      </div>
+        {/* Formatos adicionales */}
+        <section className="bg-zinc-900/30 border border-white/5 p-8 rounded-[40px]">
+          <h3 className="text-[11px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-6">Formatos Adicionales</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {formatos.map(f => {
+              const isSelected = formData[f.key] || false;
+              return (
+                <button
+                  key={f.key}
+                  type="button"
+                  onClick={() => updateFormData({ [f.key]: !isSelected })}
+                  className={`
+                    flex items-center gap-4 p-5 rounded-3xl border transition-all duration-300 text-left
+                    ${isSelected 
+                      ? 'bg-blue-500/10 border-blue-500 text-white' 
+                      : 'bg-zinc-900/50 border-white/5 text-zinc-500 hover:border-white/10'}
+                  `}
+                >
+                  <div className={`p-3 rounded-2xl ${isSelected ? 'bg-blue-500 text-white' : 'bg-zinc-800 text-zinc-500'}`}>
+                    {f.icon}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-black uppercase tracking-tighter leading-none mb-1">{f.label}</span>
+                    <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">{f.desc}</span>
+                  </div>
+                  {isSelected && (
+                    <div className="ml-auto w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                      <Check size={12} strokeWidth={4} />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
-      {/* Footer */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 20, borderTop: '1px solid var(--border-subtle)' }}>
-        <button type="button" className="btn btn-secondary" onClick={onPrev}>← Anterior</button>
-        <button type="button" className="btn btn-primary" onClick={onNext} style={{ gap: 8 }}>Siguiente →</button>
+        {/* Footer Navigation */}
+        <footer className="pt-10 border-t border-white/5 flex items-center justify-between">
+          <button 
+            type="button" 
+            onClick={onPrev}
+            className="flex items-center gap-2 px-6 py-3 rounded-2xl text-zinc-500 hover:text-white hover:bg-zinc-900 transition-all text-xs font-bold uppercase tracking-widest"
+          >
+            <ArrowLeft size={16} />
+            Anterior
+          </button>
+          
+          <button 
+            type="button" 
+            onClick={onNext}
+            className="group flex items-center gap-3 px-10 py-4 rounded-2xl bg-white text-black font-black text-xs uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-xl shadow-blue-500/10"
+          >
+            Finalizar Datos
+            <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          </button>
+        </footer>
       </div>
     </div>
   );
 }
+

@@ -34,18 +34,20 @@ export function ProfileDropdown({
         },
         {
             label: "Profile",
-            href: "#",
+            href: "/cuenta",
             icon: <User className="w-4 h-4" />,
+            isInternal: true,
         },
         {
             label: "Subscription",
             value: data.subscription,
-            href: "#",
+            href: "/cuenta?tab=suscripcion",
             icon: <CreditCard className="w-4 h-4" />,
+            isInternal: true,
         },
         {
             label: "Settings",
-            href: "/cuenta",
+            href: "/cuenta?tab=ajustes",
             icon: <Settings className="w-4 h-4" />,
             isInternal: true,
         },

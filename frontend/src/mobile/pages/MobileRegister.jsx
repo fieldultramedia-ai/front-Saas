@@ -18,6 +18,7 @@ import { sendOTP, verifyOTP, registerApi } from '../../services/api';
 import Logo from '../../components/Logo';
 import TerminosModal from '../../components/modals/TerminosModal';
 import PoliticaModal from '../../components/modals/PoliticaModal';
+import { cn } from '../../lib/utils';
 
 const validarEmail = (email) => {
   const regex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
@@ -128,27 +129,27 @@ const MobileRegister = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#070B14] text-white flex flex-col font-['DM_Sans'] overflow-x-hidden">
+    <div className="min-h-screen bg-[#070B14] text-white flex flex-col overflow-x-hidden relative">
       
       {/* Background Decorative Elements */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] right-[-10%] w-[70%] h-[40%] bg-[#00d4ff]/10 blur-[100px] rounded-full" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[70%] h-[40%] bg-[#7c3aed]/10 blur-[100px] rounded-full" />
+        <div className="absolute top-[-10%] right-[-20%] w-[100%] h-[50%] bg-[#00d4ff]/10 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute bottom-[-10%] left-[-20%] w-[100%] h-[50%] bg-[#7c3aed]/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
       {/* Top Header */}
       <div className="relative z-10 px-6 pt-10 pb-6 flex items-center justify-between">
         <button 
           onClick={() => step === 2 ? setStep(1) : navigate('/landing')}
-          className="p-2 rounded-xl bg-white/5 border border-white/10 text-white/70 active:scale-95 transition-all"
+          className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 text-white/40 flex items-center justify-center active:scale-90 transition-all"
         >
           <ArrowLeft size={20} />
         </button>
         <Logo size="small" />
-        <div className="w-10" /> {/* Spacer */}
+        <div className="w-12" />
       </div>
 
-      <main className="relative z-10 flex-1 px-6 pb-12">
+      <main className="relative z-10 flex-1 px-8 pb-20">
         <AnimatePresence mode="wait">
           {step === 1 ? (
             <motion.div
@@ -156,159 +157,122 @@ const MobileRegister = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="flex flex-col gap-8"
+              className="flex flex-col gap-10 mt-8"
             >
-              <div>
-                <h1 className="text-3xl font-bold font-['Syne'] tracking-tight mb-2">
-                  Creá tu <span className="text-[#00d4ff]">cuenta</span>
+              <div className="text-left">
+                <h1 className="text-5xl font-black font-syne tracking-tighter italic leading-none mb-4 uppercase">
+                  UNITE A LA<br/><span className="text-[#00d4ff]">ÉLITE.</span>
                 </h1>
-                <p className="text-white/50 text-sm">Empieza tu evolución inmobiliaria hoy.</p>
+                <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.3em]">Comenzá tu evolución inmobiliaria hoy</p>
               </div>
 
-              <form onSubmit={handleSubmitForm} className="flex flex-col gap-5">
-                {/* Nombre */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#00d4ff]/70 ml-1">Nombre Completo</label>
-                  <div className={`relative group ${errors.nombre ? 'animate-shake' : ''}`}>
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 group-focus-within:text-[#00d4ff] transition-colors" />
-                    <input 
-                      type="text"
-                      placeholder="Ej: Juan Pérez"
-                      className={`w-full bg-white/5 border ${errors.nombre ? 'border-red-500/50' : 'border-white/10'} focus:border-[#00d4ff]/50 rounded-2xl p-4 pl-12 text-sm outline-none transition-all placeholder:text-white/20`}
-                      value={form.nombre}
-                      onChange={e => update('nombre', e.target.value)}
-                    />
-                  </div>
-                  {errors.nombre && <span className="text-red-400 text-[10px] ml-1">{errors.nombre}</span>}
-                </div>
+              <form onSubmit={handleSubmitForm} className="flex flex-col gap-6">
+                <MobileRegInput 
+                  label="Nombre Completo" 
+                  icon={<User size={18} />} 
+                  placeholder="Ej: Juan Pérez"
+                  value={form.nombre}
+                  onChange={val => update('nombre', val)}
+                  error={errors.nombre}
+                />
 
-                {/* Email */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#00d4ff]/70 ml-1">Email Corporativo</label>
-                  <div className={`relative group ${errors.email ? 'animate-shake' : ''}`}>
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 group-focus-within:text-[#00d4ff] transition-colors" />
-                    <input 
-                      type="email"
-                      placeholder="nombre@empresa.com"
-                      className={`w-full bg-white/5 border ${errors.email ? 'border-red-500/50' : 'border-white/10'} focus:border-[#00d4ff]/50 rounded-2xl p-4 pl-12 text-sm outline-none transition-all placeholder:text-white/20`}
-                      value={form.email}
-                      onChange={e => update('email', e.target.value)}
-                    />
-                  </div>
-                  {errors.email && <span className="text-red-400 text-[10px] ml-1">{errors.email}</span>}
-                </div>
+                <MobileRegInput 
+                  label="Email Corporativo" 
+                  icon={<Mail size={18} />} 
+                  placeholder="tu@agencia.com"
+                  value={form.email}
+                  onChange={val => update('email', val)}
+                  error={errors.email}
+                />
 
-                {/* Password */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#00d4ff]/70 ml-1">Contraseña</label>
-                  <div className={`relative group ${errors.password ? 'animate-shake' : ''}`}>
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 group-focus-within:text-[#00d4ff] transition-colors" />
-                    <input 
-                      type={showPass ? 'text' : 'password'}
-                      placeholder="Mínimo 8 caracteres"
-                      className={`w-full bg-white/5 border ${errors.password ? 'border-red-500/50' : 'border-white/10'} focus:border-[#00d4ff]/50 rounded-2xl p-4 pl-12 pr-12 text-sm outline-none transition-all placeholder:text-white/20`}
-                      value={form.password}
-                      onChange={e => update('password', e.target.value)}
-                    />
-                    <button 
-                      type="button"
-                      onClick={() => setShowPass(!showPass)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
-                    >
+                <MobileRegInput 
+                  label="Contraseña" 
+                  type={showPass ? 'text' : 'password'}
+                  icon={<Lock size={18} />} 
+                  placeholder="Mínimo 8 caracteres"
+                  value={form.password}
+                  onChange={val => update('password', val)}
+                  error={errors.password}
+                  rightElement={
+                    <button type="button" onClick={() => setShowPass(!showPass)} className="text-white/20">
                       {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
-                  </div>
-                  {errors.password && <span className="text-red-400 text-[10px] ml-1">{errors.password}</span>}
-                </div>
+                  }
+                />
 
-                {/* Confirm Password */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-[#00d4ff]/70 ml-1">Confirmar Contraseña</label>
-                  <div className={`relative group ${errors.confirmPassword ? 'animate-shake' : ''}`}>
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 group-focus-within:text-[#00d4ff] transition-colors" />
-                    <input 
-                      type={showPass ? 'text' : 'password'}
-                      placeholder="Repetí tu contraseña"
-                      className={`w-full bg-white/5 border ${errors.confirmPassword ? 'border-red-500/50' : 'border-white/10'} focus:border-[#00d4ff]/50 rounded-2xl p-4 pl-12 pr-12 text-sm outline-none transition-all placeholder:text-white/20`}
-                      value={form.confirmPassword}
-                      onChange={e => update('confirmPassword', e.target.value)}
-                    />
-                  </div>
-                  {errors.confirmPassword && <span className="text-red-400 text-[10px] ml-1">{errors.confirmPassword}</span>}
-                </div>
+                <MobileRegInput 
+                  label="Confirmar Contraseña" 
+                  type={showPass ? 'text' : 'password'}
+                  icon={<Lock size={18} />} 
+                  placeholder="Reingresá tu clave"
+                  value={form.confirmPassword}
+                  onChange={val => update('confirmPassword', val)}
+                  error={errors.confirmPassword}
+                />
 
                 {/* Terms */}
-                <div className="flex items-start gap-3 mt-2 px-1">
+                <div className="flex items-start gap-3 mt-2">
                   <button 
                     type="button"
                     onClick={() => setAccepted(!accepted)}
-                    className={`mt-1 w-5 h-5 rounded-md border flex items-center justify-center transition-all ${accepted ? 'bg-[#00d4ff] border-[#00d4ff]' : 'border-white/20 bg-white/5'}`}
+                    className={cn(
+                      "mt-1 w-6 h-6 rounded-lg border flex items-center justify-center transition-all",
+                      accepted ? 'bg-[#00d4ff] border-[#00d4ff]' : 'border-white/10 bg-white/5'
+                    )}
                   >
-                    {accepted && <CheckCircle2 size={14} className="text-[#070B14]" />}
+                    {accepted && <CheckCircle2 size={16} className="text-[#070B14] stroke-[3]" />}
                   </button>
-                  <p className="text-[11px] text-white/50 leading-relaxed">
-                    Al registrarme, acepto los{' '}
-                    <button 
-                      type="button" 
-                      onClick={() => setTerminosModalOpen(true)}
-                      className="text-[#00d4ff] underline underline-offset-2"
-                    >
-                      Términos de Servicio
-                    </button>{' '}
+                  <p className="text-[10px] text-white/30 leading-relaxed font-bold uppercase tracking-tight">
+                    Acepto los{' '}
+                    <button type="button" onClick={() => setTerminosModalOpen(true)} className="text-[#00d4ff] underline">Términos</button>{' '}
                     y la{' '}
-                    <button 
-                      type="button" 
-                      onClick={() => setPoliticaModalOpen(true)}
-                      className="text-[#00d4ff] underline underline-offset-2"
-                    >
-                      Política de Privacidad
-                    </button>{' '}
-                    de LeadBook.
+                    <button type="button" onClick={() => setPoliticaModalOpen(true)} className="text-[#00d4ff] underline">Privacidad</button>.
                   </p>
                 </div>
-                {errors.accepted && <span className="text-red-400 text-[10px] ml-1">{errors.accepted}</span>}
+                {errors.accepted && <span className="text-red-400 text-[10px] ml-1 uppercase font-black">{errors.accepted}</span>}
 
                 <button 
                   type="submit"
                   disabled={loading}
-                  className="mt-4 w-full bg-gradient-to-r from-[#00d4ff] to-[#00b5d8] text-[#070B14] font-bold py-4 rounded-2xl shadow-[0_8px_20px_rgba(0,212,255,0.2)] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="mt-6 w-full h-18 bg-[#00d4ff] text-[#070B14] font-black uppercase tracking-[0.2em] rounded-3xl shadow-[0_12px_40px_rgba(0,212,255,0.3)] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                 >
                   {loading ? (
-                    <div className="w-5 h-5 border-2 border-[#070B14] border-t-transparent rounded-full animate-spin" />
+                    <div className="w-6 h-6 border-3 border-[#070B14] border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <>
-                      Registrarme ahora
-                      <ArrowRight size={18} />
+                      <span>Registrarme</span>
+                      <ArrowRight size={20} />
                     </>
                   )}
                 </button>
               </form>
 
-              <p className="text-center text-sm text-white/40">
-                ¿Ya tienes una cuenta? {' '}
-                <Link to="/login" className="text-[#00d4ff] font-bold hover:underline">Inicia sesión</Link>
+              <p className="text-center text-[10px] font-black uppercase tracking-widest text-white/20 pb-10">
+                ¿Ya tenés una cuenta? {' '}
+                <Link to="/login" className="text-[#00d4ff] hover:underline">Iniciá sesión</Link>
               </p>
             </motion.div>
           ) : (
             <motion.div
               key="otp"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="flex flex-col gap-8"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.05 }}
+              className="flex flex-col gap-10 mt-12"
             >
               <div className="text-center">
-                <div className="w-16 h-16 bg-[#00d4ff]/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-[#00d4ff]/20">
-                  <ShieldCheck size={32} className="text-[#00d4ff]" />
+                <div className="w-24 h-24 bg-[#00d4ff]/10 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 border border-[#00d4ff]/20 relative">
+                   <div className="absolute inset-0 bg-[#00d4ff]/20 blur-2xl rounded-full animate-pulse" />
+                   <ShieldCheck size={48} className="text-[#00d4ff] relative z-10" />
                 </div>
-                <h1 className="text-3xl font-bold font-['Syne'] mb-2">Verificá tu <span className="text-[#00d4ff]">email</span></h1>
-                <p className="text-white/50 text-sm max-w-[280px] mx-auto">
-                  Enviamos un código de 6 dígitos a <span className="text-white">{form.email}</span>
+                <h1 className="text-4xl font-black font-syne uppercase italic tracking-tighter mb-4">VERIFICÁ<br/><span className="text-[#00d4ff]">TU EMAIL</span></h1>
+                <p className="text-white/30 text-[10px] font-black uppercase tracking-widest max-w-[200px] mx-auto">
+                  Enviamos un código a {form.email}
                 </p>
               </div>
 
-              <form onSubmit={handleVerifyOtp} className="flex flex-col gap-8">
-                <div className="flex justify-between gap-2">
+              <form onSubmit={handleVerifyOtp} className="flex flex-col gap-10">
+                <div className="flex justify-between gap-3">
                   {otp.map((digit, idx) => (
                     <input
                       key={idx}
@@ -321,27 +285,30 @@ const MobileRegister = () => {
                       onKeyDown={e => {
                         if (e.key === 'Backspace' && !otp[idx] && idx > 0) otpInputs.current[idx - 1].focus();
                       }}
-                      className={`w-11 h-14 bg-white/5 border-2 ${digit ? 'border-[#00d4ff]' : 'border-white/10'} focus:border-[#00d4ff] rounded-xl text-center text-xl font-bold font-['Syne'] outline-none transition-all`}
+                      className={cn(
+                        "w-full h-18 bg-white/5 border-2 rounded-2xl text-center text-2xl font-black font-syne outline-none transition-all",
+                        digit ? 'border-[#00d4ff] text-[#00d4ff]' : 'border-white/10 text-white'
+                      )}
                     />
                   ))}
                 </div>
 
-                <div className="flex flex-col gap-4">
+                <div className="space-y-6">
                   <button 
                     type="submit"
                     disabled={loading || otp.join('').length < 6}
-                    className="w-full bg-[#00d4ff] text-[#070B14] font-bold py-4 rounded-2xl shadow-[0_8px_20px_rgba(0,212,255,0.2)] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="w-full h-18 bg-[#00d4ff] text-[#070B14] font-black uppercase tracking-[0.2em] rounded-3xl shadow-[0_12px_40px_rgba(0,212,255,0.3)] active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
                   >
                     {loading ? (
-                      <div className="w-5 h-5 border-2 border-[#070B14] border-t-transparent rounded-full animate-spin" />
+                      <div className="w-6 h-6 border-3 border-[#070B14] border-t-transparent rounded-full animate-spin" />
                     ) : (
-                      'Verificar código'
+                      'Verificar Código'
                     )}
                   </button>
 
                   <div className="text-center">
                     {countdown > 0 ? (
-                      <p className="text-white/30 text-xs">Reenviar código en {countdown}s</p>
+                      <p className="text-white/20 text-[10px] font-black uppercase tracking-widest">Reenviar en {countdown}s</p>
                     ) : (
                       <button 
                         type="button"
@@ -350,7 +317,7 @@ const MobileRegister = () => {
                           setCanResend(false);
                           sendOTP(form.email);
                         }}
-                        className="text-[#00d4ff] text-xs font-bold hover:underline"
+                        className="text-[#00d4ff] text-[10px] font-black uppercase tracking-[0.2em] hover:underline"
                       >
                         Reenviar código ahora
                       </button>
@@ -358,13 +325,6 @@ const MobileRegister = () => {
                   </div>
                 </div>
               </form>
-
-              <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-start gap-3">
-                <AlertCircle className="text-red-400 shrink-0" size={18} />
-                <p className="text-[11px] text-red-200/70 leading-relaxed">
-                  Si no recibiste el código, revisá tu carpeta de <strong>Spam</strong> o asegurate de haber escrito bien tu email.
-                </p>
-              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -375,5 +335,34 @@ const MobileRegister = () => {
     </div>
   );
 };
+
+function MobileRegInput({ label, icon, value, onChange, placeholder, type = "text", error, rightElement }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 pl-2">{label}</label>
+      <div className="relative">
+        <div className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20">
+          {icon}
+        </div>
+        <input 
+          type={type}
+          className={cn(
+            "w-full h-16 pl-14 pr-6 bg-white/[0.03] border rounded-2xl text-sm text-white focus:border-[#00d4ff] outline-none transition-all placeholder:text-white/10",
+            error ? 'border-red-500/50 animate-shake' : 'border-white/10'
+          )}
+          placeholder={placeholder}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+        />
+        {rightElement && (
+          <div className="absolute right-5 top-1/2 -translate-y-1/2">
+            {rightElement}
+          </div>
+        )}
+      </div>
+      {error && <span className="text-red-400 text-[9px] font-black uppercase tracking-widest ml-2">{error}</span>}
+    </div>
+  );
+}
 
 export default MobileRegister;

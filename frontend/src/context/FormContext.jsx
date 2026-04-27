@@ -53,13 +53,22 @@ const initialFormData = {
 
 export const FormProvider = ({ children }) => {
   const [formData, setFormData] = useState(() => {
-    const saved = localStorage.getItem('subzeroFormData');
-    return saved ? JSON.parse(saved) : initialFormData;
+    try {
+      const saved = localStorage.getItem('subzeroFormData');
+      return saved ? JSON.parse(saved) : initialFormData;
+    } catch (e) {
+      console.warn('Error parsing subzeroFormData from localStorage:', e);
+      return initialFormData;
+    }
   });
 
   const [currentStep, setCurrentStep] = useState(() => {
-    const savedStep = localStorage.getItem('subzeroCurrentStep');
-    return savedStep ? parseInt(savedStep, 10) : 1;
+    try {
+      const savedStep = localStorage.getItem('subzeroCurrentStep');
+      return savedStep ? parseInt(savedStep, 10) : 1;
+    } catch (e) {
+      return 1;
+    }
   });
 
   useEffect(() => {

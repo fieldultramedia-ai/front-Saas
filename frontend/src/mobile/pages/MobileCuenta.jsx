@@ -1,101 +1,309 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   User, 
   Shield, 
-  CreditCard, 
-  Link2, 
+  Settings, 
   LogOut, 
   ChevronRight,
-  Settings,
-  HelpCircle,
-  Bell
+  Building2,
+  Globe,
+  Phone,
+  Mail,
+  FileText,
+  Upload,
+  Camera,
+  CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { getPerfil, actualizarPerfil, updatePassword } from '../../services/api';
+import { useAppStore } from '../../store/useAppStore';
+import { cn } from '../../lib/utils';
+import AvatarUpload from '../../components/cuenta/AvatarUpload';
 
 const MobileCuenta = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { addToast } = useAppStore();
+  
+  const [activeTab, setActiveTab] = useState('perfil'); // 'perfil' | 'seguridad' | 'ajustes'
+  const [loading, setLoading] = useState(true);
+  const [profileData, setProfileData] = useState(null);
+  const [saving, setSaving] = useState(false);
 
-  const menuItems = [
-    { icon: User, label: 'Mi Perfil', sub: 'Información personal y logo', path: '/mobile/cuenta/perfil' },
-    { icon: Shield, label: 'Seguridad', sub: 'Cambiar contraseña', path: '/mobile/cuenta/seguridad' },
-    { icon: CreditCard, label: 'Plan y Facturación', sub: 'Gestionar suscripción', path: '/mobile/cuenta/plan' },
-    { icon: Link2, label: 'Conexiones', sub: 'Redes sociales vinculadas', path: '/mobile/cuenta/conexiones' },
-    { icon: Bell, label: 'Notificaciones', sub: 'Ajustes de alertas', path: '/mobile/cuenta/notificaciones' },
-    { icon: HelpCircle, label: 'Ayuda y Soporte', sub: 'Centro de ayuda', path: '/mobile/cuenta/soporte' },
-  ];
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const data = await getPerfil();
+        setProfileData(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadProfile();
+  }, []);
+
+  const handleUpdate = (field, value) => {
+    setProfileData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const saveChanges = async () => {
+    setSaving(true);
+    try {
+      await actualizarPerfil(profileData);
+      addToast({ type: 'success', title: 'Perfil actualizado', message: 'Los cambios se guardaron correctamente.' });
+    } catch (err) {
+      addToast({ type: 'error', title: 'Error', message: 'No se pudieron guardar los cambios.' });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh]">
+      <div className="w-10 h-10 border-4 border-[#00d4ff] border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+
   return (
-    <div className="px-6 py-8 pb-32">
-      {/* Profile Header */}
-      <div className="flex flex-col items-center text-center mb-10 pt-4">
-        <div className="relative mb-4">
-          <div className="w-24 h-24 rounded-[2.5rem] bg-gradient-to-br from-[#00d4ff] to-[#6001d1] p-1 shadow-[0_0_30px_rgba(0,212,255,0.2)]">
-            <div className="w-full h-full bg-[#070B14] rounded-[2.2rem] flex items-center justify-center overflow-hidden">
-              {user?.agencyLogo ? (
-                <img src={user.agencyLogo} alt="Profile" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-3xl font-bold font-['Syne'] text-[#00d4ff]">
-                  {user?.name?.[0] || user?.email?.[0]?.toUpperCase()}
-                </span>
-              )}
-            </div>
-          </div>
-          <button className="absolute bottom-0 right-0 w-8 h-8 bg-[#00d4ff] rounded-full border-4 border-[#070B14] flex items-center justify-center text-[#070B14]">
-            <Settings size={14} />
-          </button>
-        </div>
-        <h2 className="text-xl font-bold font-['Syne'] text-white">{user?.name || 'Usuario'}</h2>
-        <p className="text-gray-500 text-sm mt-1">{user?.email}</p>
+    <div className="px-6 py-10 pb-40">
+      {/* Header Premium */}
+      <div className="mb-10">
+        <h1 className="text-3xl font-black font-syne uppercase tracking-tighter italic text-white mb-2">MI CUENTA</h1>
+        <p className="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em]">Gestioná tu identidad y preferencias</p>
       </div>
 
-      {/* Menu Options */}
-      <div className="flex flex-col gap-2">
-        {menuItems.map((item, i) => (
-          <motion.button
-            key={i}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.05 }}
-            className="w-full p-5 rounded-3xl bg-[#1b2029]/40 border border-white/5 flex items-center gap-4 active:bg-white/5 transition-colors text-left"
+      {/* Tabs Selector */}
+      <div className="flex gap-1 p-1 bg-white/5 border border-white/5 rounded-2xl mb-10 overflow-x-auto scrollbar-hide">
+        {[
+          { id: 'perfil', label: 'Perfil', icon: User },
+          { id: 'seguridad', label: 'Seguridad', icon: Shield },
+          { id: 'ajustes', label: 'Ajustes', icon: Settings },
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              "flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap",
+              activeTab === tab.id 
+                ? "bg-[#00d4ff] text-[#070B14] shadow-[0_4px_12px_rgba(0,212,255,0.2)]" 
+                : "text-white/40 hover:text-white"
+            )}
           >
-            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400">
-              <item.icon size={20} />
-            </div>
-            <div className="flex-1">
-              <div className="text-sm font-bold text-white">{item.label}</div>
-              <div className="text-[10px] text-gray-500 uppercase tracking-wider">{item.sub}</div>
-            </div>
-            <ChevronRight size={16} className="text-gray-700" />
-          </motion.button>
+            <tab.icon size={14} /> {tab.label}
+          </button>
         ))}
       </div>
 
-      {/* Logout Button */}
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-        onClick={handleLogout}
-        className="w-full mt-8 p-5 rounded-3xl bg-red-500/5 border border-red-500/10 flex items-center gap-4 active:bg-red-500/10 transition-colors text-left group"
-      >
-        <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500">
-          <LogOut size={20} />
-        </div>
-        <div className="flex-1">
-          <div className="text-sm font-bold text-red-500">Cerrar Sesión</div>
-          <div className="text-[10px] text-red-500/50 uppercase tracking-wider">Finalizar sesión actual</div>
-        </div>
-      </motion.button>
+      <AnimatePresence mode="wait">
+        {activeTab === 'perfil' && (
+          <motion.div 
+            key="perfil"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-8"
+          >
+            {/* Foto de Perfil / Logo */}
+            <div className="flex flex-col items-center mb-10">
+              <AvatarUpload 
+                src={profileData?.logoUrl || profileData?.logo_url} 
+                nombre={profileData?.nombre} 
+                onUpload={(url) => handleUpdate('logoUrl', url)} 
+              />
+              <div className="mt-4 text-center">
+                <h3 className="text-lg font-bold text-white uppercase tracking-tight">{profileData?.nombre || 'Usuario'}</h3>
+                <span className="inline-block mt-1 px-3 py-1 rounded-full bg-[#00d4ff]/10 text-[#00d4ff] text-[9px] font-black uppercase tracking-widest border border-[#00d4ff]/20">
+                  Plan {profileData?.plan || 'PRO'}
+                </span>
+              </div>
+            </div>
+
+            {/* Inputs Personales */}
+            <div className="space-y-6">
+              <h3 className="text-[11px] font-black text-white/40 uppercase tracking-[0.3em] pl-2">Información Personal</h3>
+              <MobileInput 
+                label="Nombre Completo" 
+                icon={<User size={16} />} 
+                value={profileData?.nombre || ''} 
+                onChange={val => handleUpdate('nombre', val)} 
+              />
+              <MobileInput 
+                label="Correo Electrónico" 
+                icon={<Mail size={16} />} 
+                value={profileData?.email || ''} 
+                onChange={val => handleUpdate('email', val)} 
+              />
+              <MobileInput 
+                label="Teléfono" 
+                icon={<Phone size={16} />} 
+                placeholder="+54 9..."
+                value={profileData?.telefono || ''} 
+                onChange={val => handleUpdate('telefono', val)} 
+              />
+              <div className="flex flex-col gap-2 px-2">
+                <label className="text-[10px] uppercase tracking-widest font-black text-white/40">País / Región</label>
+                <select 
+                  className="w-full h-14 px-4 bg-white/5 border border-white/10 rounded-2xl text-sm text-white focus:border-[#00d4ff] outline-none transition-all"
+                  value={profileData?.pais || ''} 
+                  onChange={e => handleUpdate('pais', e.target.value)}
+                >
+                  <option value="" className="bg-[#070B14]">Seleccionar...</option>
+                  <option value="Argentina" className="bg-[#070B14]">Argentina</option>
+                  <option value="México" className="bg-[#070B14]">México</option>
+                  <option value="España" className="bg-[#070B14]">España</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Datos de Agencia */}
+            <div className="space-y-6 pt-6">
+              <h3 className="text-[11px] font-black text-white/40 uppercase tracking-[0.3em] pl-2">Datos de la Agencia</h3>
+              <MobileInput 
+                label="Inmobiliaria" 
+                icon={<Building2 size={16} />} 
+                placeholder="Nombre de tu negocio"
+                value={profileData?.nombreInmobiliaria || profileData?.nombre_inmobiliaria || ''} 
+                onChange={val => handleUpdate('nombreInmobiliaria', val)} 
+              />
+              <MobileInput 
+                label="Sitio Web" 
+                icon={<Globe size={16} />} 
+                placeholder="www.tuweb.com"
+                value={profileData?.sitioWeb || profileData?.sitio_web || ''} 
+                onChange={val => handleUpdate('sitioWeb', val)} 
+              />
+              <div className="flex flex-col gap-2 px-2">
+                <label className="text-[10px] uppercase tracking-widest font-black text-white/40">Biografía</label>
+                <div className="relative">
+                  <FileText size={16} className="absolute left-4 top-4 text-white/20" />
+                  <textarea 
+                    className="w-full min-h-[120px] pl-12 pr-4 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm text-white focus:border-[#00d4ff] outline-none transition-all resize-none"
+                    placeholder="Contanos sobre vos..."
+                    value={profileData?.bio || ''} 
+                    onChange={e => handleUpdate('bio', e.target.value)} 
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Botón Guardar */}
+            <button 
+              onClick={saveChanges}
+              disabled={saving}
+              className="w-full h-16 rounded-2xl bg-[#00d4ff] text-[#070B14] font-black uppercase tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all shadow-[0_8px_30px_rgba(0,212,255,0.2)]"
+            >
+              {saving ? (
+                <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <>
+                  <CheckCircle2 size={20} />
+                  <span>Guardar Cambios</span>
+                </>
+              )}
+            </button>
+
+            {/* Logout al final */}
+            <button 
+              onClick={handleLogout}
+              className="w-full h-16 rounded-2xl bg-red-500/10 border border-red-500/10 text-red-500 font-black uppercase tracking-widest flex items-center justify-center gap-3 mt-10 active:scale-95 transition-all"
+            >
+              <LogOut size={18} />
+              <span>Cerrar Sesión</span>
+            </button>
+          </motion.div>
+        )}
+
+        {activeTab === 'seguridad' && (
+          <motion.div 
+            key="seguridad"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-8"
+          >
+             <div className="p-8 rounded-[2rem] bg-white/[0.02] border border-white/5 text-center">
+               <div className="w-16 h-16 rounded-full bg-[#7C3AED]/10 flex items-center justify-center mx-auto mb-6">
+                 <Shield className="text-[#7C3AED]" size={32} />
+               </div>
+               <h3 className="text-xl font-bold text-white mb-2 uppercase tracking-tighter">Seguridad</h3>
+               <p className="text-white/40 text-xs mb-8">Cambiá tu contraseña regularmente para mayor protección.</p>
+               
+               <div className="space-y-4 text-left">
+                 <MobileInput label="Contraseña Actual" type="password" icon={<Shield size={16} />} />
+                 <MobileInput label="Nueva Contraseña" type="password" icon={<Shield size={16} />} />
+                 <button className="w-full h-14 rounded-xl bg-white/10 text-white font-bold uppercase tracking-widest text-xs mt-4">Actualizar Password</button>
+               </div>
+             </div>
+          </motion.div>
+        )}
+
+        {activeTab === 'ajustes' && (
+          <motion.div 
+            key="ajustes"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="space-y-6"
+          >
+            {[
+              { label: 'Notificaciones Push', active: true },
+              { label: 'Emails de Marketing', active: false },
+              { label: 'Modo Desarrollador', active: false },
+              { label: 'Reportar un error', active: null },
+            ].map((adj, i) => (
+              <div key={i} className="flex items-center justify-between p-6 rounded-2xl bg-white/[0.02] border border-white/5">
+                <span className="text-sm font-bold text-white/70 uppercase tracking-tight">{adj.label}</span>
+                {adj.active !== null ? (
+                  <div className={cn(
+                    "w-12 h-6 rounded-full p-1 transition-all",
+                    adj.active ? "bg-[#00d4ff]" : "bg-white/10"
+                  )}>
+                    <div className={cn(
+                      "w-4 h-4 bg-white rounded-full transition-all",
+                      adj.active ? "translate-x-6" : "translate-x-0"
+                    )} />
+                  </div>
+                ) : (
+                  <ChevronRight size={16} className="text-white/20" />
+                )}
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
+
+function MobileInput({ label, icon, value, onChange, placeholder = "", type = "text" }) {
+  return (
+    <div className="flex flex-col gap-2 px-2">
+      <label className="text-[10px] uppercase tracking-widest font-black text-white/40">{label}</label>
+      <div className="relative">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20">
+          {icon}
+        </div>
+        <input 
+          type={type}
+          className="w-full h-14 pl-12 pr-4 bg-white/5 border border-white/10 rounded-2xl text-sm text-white focus:border-[#00d4ff] outline-none transition-all"
+          placeholder={placeholder}
+          value={value} 
+          onChange={e => onChange?.(e.target.value)} 
+        />
+      </div>
+    </div>
+  );
+}
+
+export default MobileCuenta;
 
 export default MobileCuenta;

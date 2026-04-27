@@ -73,7 +73,7 @@ export default function AppNavbar() {
                   name: user.name,
                   email: user.email,
                   avatar: user.agencyLogo,
-                  subscription: user.plan || "PRO",
+                  subscription: user.plan_nombre || "FREE",
                 }}
                 onLogout={() => { logout(); navigate('/'); }}
               />

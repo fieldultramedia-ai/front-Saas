@@ -71,10 +71,10 @@ const LandingNavbar = ({ seccionActiva, setSeccionActiva }) => {
               : 'bg-[rgba(10,14,23,0.4)] rounded-full backdrop-blur-md border-t border-white/5',
           ].join(' ')}
         >
-          <div className="relative flex flex-wrap items-center justify-between gap-6 py-3 lg:gap-0 lg:py-4">
+          <div className="relative flex flex-wrap items-center justify-between py-3 lg:flex-nowrap lg:gap-0 lg:py-4">
 
-            {/* Logo + hamburger */}
-            <div className="flex w-full justify-between lg:w-auto">
+            {/* Left Section: Logo + hamburger */}
+            <div className="flex w-full justify-between lg:w-1/3 lg:justify-start">
               <button
                 onClick={() => navegarA('inicio')}
                 className="flex items-center gap-3 bg-transparent border-none cursor-pointer p-0"
@@ -108,8 +108,8 @@ const LandingNavbar = ({ seccionActiva, setSeccionActiva }) => {
               </button>
             </div>
 
-            {/* Desktop nav links — centered */}
-            <div className="absolute inset-0 m-auto hidden size-fit lg:block">
+            {/* Center Section: Desktop nav links */}
+            <div className="hidden lg:flex lg:w-1/3 lg:justify-center">
               <ul className="flex gap-8 text-sm">
                 {NAV_LINKS.map(({ label, id }) => (
                   <li key={id}>
@@ -129,11 +129,11 @@ const LandingNavbar = ({ seccionActiva, setSeccionActiva }) => {
               </ul>
             </div>
 
-            {/* Right section: auth buttons + mobile menu panel */}
+            {/* Right Section: auth buttons + mobile menu panel */}
             <div
               className={[
                 'w-full flex-wrap items-center justify-end rounded-3xl border border-white/10 bg-[rgba(7,11,20,0.95)] p-6 shadow-2xl shadow-zinc-900/20',
-                'lg:m-0 lg:flex lg:w-fit lg:gap-6 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none mb-4 lg:mb-0',
+                'lg:m-0 lg:flex lg:w-1/3 lg:gap-6 lg:border-transparent lg:bg-transparent lg:p-0 lg:shadow-none mb-4 lg:mb-0',
                 menuOpen ? 'flex' : 'hidden lg:flex',
               ].join(' ')}
             >

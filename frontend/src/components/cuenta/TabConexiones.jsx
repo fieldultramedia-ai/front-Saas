@@ -116,7 +116,7 @@ export default function TabConexiones({ showHeader = true }) {
     await cargarEstado(false);
   };
 
-  const conectarRedes = async () => {
+  const conectarRedes = async (platform = null) => {
     setConectando(true);
     setError(null);
     try {
@@ -125,7 +125,8 @@ export default function TabConexiones({ showHeader = true }) {
         headers: {
           'Authorization': `Bearer ${getToken()}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({ platform })
       });
       const data = await resp.json();
       if (data.access_url) {
@@ -212,17 +213,18 @@ export default function TabConexiones({ showHeader = true }) {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: idx * 0.05 }}
+                onClick={() => !conectada && !conectando && conectarRedes(red.id)}
                 className={cn(
-                  "flex items-center gap-3 px-6 py-3 rounded-full border transition-all cursor-default group",
+                  "flex items-center gap-3 px-6 py-3 rounded-full border transition-all group",
                   conectada 
-                    ? "bg-white/10 border-white/20" 
-                    : "bg-[#161B22] border-white/5 hover:border-white/10"
+                    ? "bg-white/10 border-white/20 cursor-default" 
+                    : "bg-[#161B22] border-white/5 hover:border-white/20 hover:bg-white/[0.02] cursor-pointer"
                 )}
               >
                 <BrandIcon id={red.id} color={red.color} />
                 <span className={cn(
                   "text-xs font-bold tracking-tight transition-colors",
-                  conectada ? "text-white" : "text-white/40 group-hover:text-white/60"
+                  conectada ? "text-white" : "text-white/40 group-hover:text-white/80"
                 )}>
                   {red.nombre}
                 </span>

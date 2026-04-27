@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { FormProvider } from './context/FormContext';
 
@@ -28,25 +28,30 @@ import PagoFallidoPage from './pages/PagoFallidoPage';
 import TerminosPage    from './pages/TerminosPage';
 
 // Componente de ruta protegida
-function ProtectedRoute({ children }) {
+function ProtectedRoute() {
   const { user, loading } = useAuth()
   const location = useLocation()
 
-  if (loading) return null
-
-  if (!user) {
-    return <Navigate to="/login" replace />
+  if (loading) {
+    return (
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', background:'#020408' }}>
+        <div className="animate-spin" style={{ width:32, height:32, border:'2px solid rgba(255,255,255,0.1)', borderTop:'2px solid #00d4ff', borderRadius:'50%' }} />
+      </div>
+    );
   }
 
-  // Solo redirigir a select-plan si:
-  // 1. No tiene plan seleccionado
-  // 2. NO está ya en /select-plan (evitar loop)
-  // 3. NO está yendo al dashboard después de pagar
-  const planSeleccionado = user?.plan_seleccionado || 
-    (localStorage.getItem('subzero_user') && 
-     JSON.parse(localStorage.getItem('subzero_user')).plan_seleccionado)
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />
+  }
 
-  const estaEnSelectPlan = location.pathname === '/select-plan'
+  const planSeleccionado = user?.plan_seleccionado || 
+    (() => {
+      try {
+        const stored = localStorage.getItem('subzero_user');
+        return stored ? JSON.parse(stored)?.plan_seleccionado : null;
+      } catch (e) { return null; }
+    })()
+
   const estaEnOnboarding = location.pathname === '/onboarding'
   const vieneDeMP = location.search.includes('pago=')
 
@@ -54,31 +59,23 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/onboarding" replace />
   }
 
-  // TAREA 1: Verificación de Onboarding
-  const needsOnboarding = localStorage.getItem('leadbook_needs_onboarding') === 'true'
-
-  if (planSeleccionado && needsOnboarding && !estaEnOnboarding) {
-    return <Navigate to="/onboarding" replace />
-  }
-
-  return children
+  return <Outlet />
 }
 
-// Componente de ruta protegida para admin
-function AdminRoute({ children }) {
-  const { user, loading } = useAuth();
-  if (loading) return <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', background:'var(--bg-base)' }}><div className="animate-spin" style={{ width:32, height:32, border:'2px solid var(--border-default)', borderTop:'2px solid var(--accent)', borderRadius:'50%' }} /></div>;
-  if (!user) return <Navigate to="/login" replace />;
-  if (!user.is_staff) return <Navigate to="/dashboard" replace />;
-  return children;
-}
-
-// Componente de ruta pública (redirige al dashboard si ya está logueado)
-function PublicRoute({ children }) {
+// Componente de ruta pública
+function PublicRoute() {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (user) return <Navigate to="/dashboard" replace />;
-  return children;
+  return <Outlet />;
+}
+
+// Componente de ruta para admin
+function AdminRoute() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user || !user.is_staff) return <Navigate to="/dashboard" replace />;
+  return <Outlet />;
 }
 
 // Components
@@ -89,22 +86,14 @@ import MobileRouter from './mobile/router/MobileRouter';
 function AppContent() {
   const location = useLocation();
   const isLandingPath = location.pathname === '/landing';
-
-  // Mobile detection logic
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 1024;
 
-  // Si es móvil y NO estamos en la raíz (don de vive el onboarding), usar MobileRouter
   if (isMobile && location.pathname !== '/') {
     return <MobileRouter />;
   }
 
   return (
     <RotationWrapper>
-      {/* 
-          Persistent Landing Page: 
-          Always mounted while on onboarding or landing, 
-          so it starts loading while the user is watching the intro.
-      */}
       {!isMobile && (location.pathname === '/' || isLandingPath) && (
         <div 
           style={{ 
@@ -125,42 +114,48 @@ function AppContent() {
       <Routes>
         {/* Públicas */}
         <Route path="/" element={<DeviceOnboardingPage />} />
-        
-        {/* /landing is handled by the persistent component above, but we keep the route for navigation */}
         <Route path="/landing" element={<div style={{ height: '100vh', background: '#000' }} />} />
-        
         <Route path="/precios" element={<PreciosPage />} />
-        <Route path="/login"   element={<PublicRoute><LoginPage /></PublicRoute>} />
-        <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-        <Route path="/recuperar-password" element={<PublicRoute><RecuperarPasswordPage /></PublicRoute>} />
-
-        {/* Pago */}
-        <Route path="/pago-exitoso" element={<ProtectedRoute><PagoExitosoPage /></ProtectedRoute>} />
-        <Route path="/pago-fallido" element={<ProtectedRoute><PagoFallidoPage /></ProtectedRoute>} />
-        <Route path="/pago-pendiente" element={<ProtectedRoute><PagoExitosoPage /></ProtectedRoute>} />
-        <Route path="/terminos"       element={<TerminosPage />} />
-
-        {/* Selección de Plan (Protegida) */}
-        <Route path="/select-plan" element={<ProtectedRoute><SelectPlanPage /></ProtectedRoute>} />
-
-        {/* Onboarding (protegida pero sin AppLayout) */}
-        <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
-
-        {/* Protegidas con AppLayout */}
-        <Route element={<ProtectedRoute><FormProvider><AppLayout /></FormProvider></ProtectedRoute>}>
-          <Route path="/dashboard"   element={<DashboardPage />} />
-          <Route path="/nuevo"       element={<NuevoPage />} />
-          <Route path="/historial"   element={<HistorialPage />} />
-          <Route path="/resultados"  element={<ResultadosPage />} />
-          <Route path="/cuenta"      element={<CuentaPage />} />
-          <Route path="/conexiones"  element={<ConexionesPage />} />
+        
+        <Route element={<PublicRoute />}>
+          <Route path="/login"   element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/recuperar-password" element={<RecuperarPasswordPage />} />
         </Route>
 
-        <Route element={<AdminRoute><AppLayout /></AdminRoute>}>
-          <Route path="/admin" element={<AdminPage />} />
+        <Route path="/terminos" element={<TerminosPage />} />
+
+        {/* Protegidas (Sin AppLayout) */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/pago-exitoso" element={<PagoExitosoPage />} />
+          <Route path="/pago-fallido" element={<PagoFallidoPage />} />
+          <Route path="/pago-pendiente" element={<PagoExitosoPage />} />
+          <Route path="/select-plan" element={<SelectPlanPage />} />
+          <Route path="/onboarding" element={<OnboardingPage />} />
+          
+          <Route element={<FormProvider><Outlet /></FormProvider>}>
+            <Route path="/nuevo" element={<NuevoPage />} />
+            <Route path="/resultados" element={<ResultadosPage />} />
+          </Route>
+        </Route>
+
+        {/* Protegidas (Con AppLayout) */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<FormProvider><AppLayout /></FormProvider>}>
+            <Route path="/dashboard"   element={<DashboardPage />} />
+            <Route path="/historial"   element={<HistorialPage />} />
+            <Route path="/cuenta"      element={<CuentaPage />} />
+            <Route path="/conexiones"  element={<ConexionesPage />} />
+          </Route>
+        </Route>
+
+        {/* Admin */}
+        <Route element={<AdminRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/admin" element={<AdminPage />} />
+          </Route>
         </Route>
         
-        {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </RotationWrapper>

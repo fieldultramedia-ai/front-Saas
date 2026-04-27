@@ -17,7 +17,7 @@ export default function DeviceOnboardingPage() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [showContent, setShowContent] = useState(false);
+  const [showContent, setShowContent] = useState(true);
   const [step, setStep] = useState('select'); // 'select' | 'mobile-options' | 'rotate' | 'intro'
   const [isLandscape, setIsLandscape] = useState(false);
   
@@ -113,12 +113,14 @@ export default function DeviceOnboardingPage() {
         opacity: 0.35,
         zIndex: 0,
       }}>
-        <Iridescence
-          color={IRIDESCENCE_COLOR}
-          speed={0.6}
-          amplitude={0.15}
-          mouseReact={true}
-        />
+        {window.WebGLRenderingContext && (
+          <Iridescence
+            color={IRIDESCENCE_COLOR}
+            speed={0.6}
+            amplitude={0.15}
+            mouseReact={true}
+          />
+        )}
       </div>
 
       {/* ─── Dark overlay ─── */}

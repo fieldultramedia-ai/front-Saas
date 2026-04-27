@@ -40,6 +40,7 @@ export const AuthProvider = ({ children }) => {
         ...userData,
         agencyName: perfil.nombre_inmobiliaria || '',
         agencyLogo: perfil.logo_url || null,
+        telefono: perfil.telefono || '',
         plan_nombre: planStatus.plan_nombre || 'free',
         plan_seleccionado: planStatus.plan_seleccionado,
         plan_activo: planStatus.plan_activo,
