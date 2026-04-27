@@ -305,5 +305,3 @@ function MobileInput({ label, icon, value, onChange, placeholder = "", type = "t
 }
 
 export default MobileCuenta;
-
-export default MobileCuenta;
