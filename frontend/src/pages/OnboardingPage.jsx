@@ -271,7 +271,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070B14] text-white flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-[#070B14] text-white flex flex-col items-center justify-center p-4 relative overflow-hidden">
       {/* Decorative Orbs */}
       <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-[#00d4ff]/10 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-[-10%] right-[20%] w-[30%] h-[30%] rounded-full bg-[#6001d1]/10 blur-[100px] pointer-events-none" />
@@ -287,10 +287,10 @@ export default function OnboardingPage() {
       )}
 
       {/* Main Container */}
-      <div className="w-full max-w-4xl z-10 flex flex-col">
+      <div className={cn("w-full z-10 flex flex-col transition-all duration-500", step === 4 ? "max-w-[1440px]" : "max-w-4xl")}>
         
         {/* Step Indicator */}
-        {step > 1 && (
+        {step > 1 && step < 4 && (
           <div className="flex justify-center mb-12 gap-3">
             {[2, 3, 4].map((s) => (
               <div 
@@ -421,11 +421,11 @@ export default function OnboardingPage() {
 
           {step === 4 && (
             <div className="animate-element relative w-full">
-              <div className="text-center mb-10">
+              <div className="text-center mb-8">
                 <h1 className="text-5xl font-black font-syne mb-2 tracking-tighter uppercase italic">PRECIOS</h1>
                 <p className="text-white/40 text-sm">Seleccioná el plan que mejor se adapte a tus necesidades.</p>
 
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6">
                   <ToggleGroup 
                     label="cycle"
                     options={[
@@ -452,7 +452,7 @@ export default function OnboardingPage() {
                   <div 
                     key={plan.id}
                     className={cn(
-                      "relative p-6 rounded-[2.5rem] border transition-all flex flex-col",
+                      "relative p-7 rounded-[2.5rem] border transition-all flex flex-col",
                       plan.id === 'pro' 
                         ? 'bg-[#00d4ff]/5 border-[#00d4ff]/40 shadow-[0_0_50px_rgba(0,212,255,0.08)]' 
                         : 'bg-[#0a0f1a] border-white/5 hover:border-white/10'
@@ -464,7 +464,7 @@ export default function OnboardingPage() {
                       </div>
                     )}
                     
-                    <div className="flex flex-col items-center text-center mb-8">
+                    <div className="flex flex-col items-center text-center mb-6">
                       <div className={cn(
                         "w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-all border",
                         plan.id === 'pro' ? 'bg-[#00d4ff] text-black border-transparent' : 'bg-white/5 text-white/40 border-white/5'
@@ -475,14 +475,14 @@ export default function OnboardingPage() {
                       <p className="text-[10px] text-white/30 uppercase font-bold tracking-widest mt-1">{plan.subtitle}</p>
                     </div>
 
-                    <div className="flex flex-col items-center mb-8">
+                    <div className="flex flex-col items-center mb-4">
                       <div className="flex items-baseline gap-1">
                         <span className="text-4xl font-black text-white tracking-tighter">{getPriceDisplay(plan)}</span>
                         {plan.id !== 'business' && <span className="text-xs text-white/20 font-bold uppercase tracking-widest">/mo</span>}
                       </div>
                     </div>
 
-                    <div className="space-y-4 mb-10 flex-1">
+                    <div className="space-y-3 mb-10 flex-1">
                       {FEATURES.map((feature, fIdx) => {
                         const val = feature.values[planIdx];
                         const isNo = val === false || val === '-';
@@ -498,7 +498,7 @@ export default function OnboardingPage() {
                               )}
                             </div>
                             <div className="flex flex-col">
-                              <span className={cn("text-[11px] leading-tight", isNo ? "text-white/20" : "text-white/70 font-medium")}>
+                              <span className={cn("text-xs leading-tight", isNo ? "text-white/20" : "text-white/70 font-medium")}>
                                 {val === true ? feature.label : val === false ? feature.label : `${val} ${feature.label}`}
                               </span>
                             </div>
