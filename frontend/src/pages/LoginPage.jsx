@@ -1,30 +1,45 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAppStore } from '../store/useAppStore';
-import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
 import { GlassInputWrapper, SignInPage } from '../components/ui/sign-in';
 
 export default function LoginPage() {
   const { login } = useAuth();
   const { addToast } = useAppStore();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorStatus, setErrorStatus] = useState(null); // 'suspended' or 'deleted'
+
+  useEffect(() => {
+    const status = searchParams.get('status');
+    if (status === 'deleted') {
+      setErrorStatus('deleted');
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
+      setErrorStatus(null);
       await login(email, password);
       const needsOnboarding = localStorage.getItem('leadbook_needs_onboarding');
       navigate(needsOnboarding ? '/onboarding' : '/dashboard');
       addToast({ type: 'success', title: '¡Bienvenido!', message: 'Inicio de sesión exitoso' });
     } catch (err) {
-      addToast({ type: 'error', title: 'Error', message: 'Email o contraseña incorrectos' });
+      const detail = err.response?.data?.detail || '';
+      if (detail.includes('No active account found')) {
+        setErrorStatus('suspended');
+      } else {
+        addToast({ type: 'error', title: 'Error', message: 'Email o contraseña incorrectos' });
+      }
     } finally {
       setLoading(false);
     }
@@ -62,6 +77,22 @@ export default function LoginPage() {
       footerAction={() => navigate('/register')}
       backAction={() => navigate('/landing')}
     >
+      {errorStatus && (
+        <div className="mb-6 p-4 rounded-2xl bg-red-500/10 border border-red-500/20 flex gap-3 animate-in fade-in slide-in-from-top-2">
+          <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-sm font-bold text-red-200">
+              {errorStatus === 'suspended' ? 'Cuenta Suspendida' : 'Cuenta Eliminada'}
+            </p>
+            <p className="text-xs text-red-300/80 leading-relaxed">
+              {errorStatus === 'suspended' 
+                ? 'Tu cuenta ha sido suspendida. Contactate con nosotros: soporte@leadbook.com.ar'
+                : 'Tu cuenta ha sido eliminada. Contactate con nosotros: soporte@leadbook.com.ar'}
+            </p>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1">
           <label className="text-[11px] font-bold text-white/40 uppercase tracking-widest">Email</label>

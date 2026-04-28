@@ -113,7 +113,15 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        handleGlobalLogout();
+        
+        // Si el error del refresh es 401 o 404, es probable que el usuario ya no exista
+        const status = refreshError.response?.status;
+        if (status === 401 || status === 404) {
+          handleGlobalLogout('deleted');
+        } else {
+          handleGlobalLogout('expired');
+        }
+        
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -132,14 +140,14 @@ apiClient.interceptors.response.use(
 /**
  * Función centralizada para limpiar la sesión y redirigir.
  */
-function handleGlobalLogout() {
+function handleGlobalLogout(reason = 'expired') {
   localStorage.removeItem('subzero_access');
   localStorage.removeItem('subzero_refresh');
   localStorage.removeItem('subzero_user');
   window.dispatchEvent(new CustomEvent('auth:logout'));
   // Redirección forzada si no estamos ya en el login
   if (!window.location.pathname.includes('/login')) {
-    window.location.href = '/login?session=expired';
+    window.location.href = `/login?status=${reason}`;
   }
 }
 
