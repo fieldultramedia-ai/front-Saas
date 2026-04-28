@@ -45,7 +45,6 @@ function PasswordStrength({ password }) {
   );
 }
 
-import { Balloons } from '../components/ui/balloons';
 import WelcomeScreen from '../components/WelcomeScreen';
 
 export default function RegisterPage() {
@@ -54,8 +53,6 @@ export default function RegisterPage() {
   const { logout } = useAuth();
 
   const [step, setStep] = useState(1); // 1: Form, 2: OTP
-  const [showWelcome, setShowWelcome] = useState(false);
-  const balloonsRef = useRef(null);
   
   // ... rest of state stays the same
   // ... (rest of the state)
@@ -115,7 +112,12 @@ export default function RegisterPage() {
       addToast({ type:'info', title:'Código enviado', message:`Enviamos un código a ${form.email}` });
       setStep(2);
     } catch (err) {
-      addToast({ type:'error', title:'Error', message: err.message || 'No se pudo enviar el código.' });
+      if (err.message.includes('ya está registrado') || err.message.includes('ALREADY_REGISTERED')) {
+        setErrors(prev => ({ ...prev, email: 'Este email ya está registrado.' }));
+        addToast({ type: 'warning', title: 'Cuenta existente', message: 'Este email ya está registrado. Podés iniciar sesión.' });
+      } else {
+        addToast({ type:'error', title:'Error', message: err.message || 'No se pudo enviar el código.' });
+      }
     } finally {
       setLoading(false);
     }
@@ -139,13 +141,8 @@ export default function RegisterPage() {
         localStorage.setItem('leadbook_needs_onboarding', 'true');
       }
       
-      // Mostrar globos y mensaje
-      setShowWelcome(true);
-      setTimeout(() => {
-        if (balloonsRef.current) {
-          balloonsRef.current.launchAnimation();
-        }
-      }, 100);
+      // Navegar directamente al onboarding (que ya tiene su propio WelcomeScreen)
+      window.location.href = '/onboarding';
 
     } catch (err) {
       addToast({ type:'error', title:'Error de verificación', message: err.message || 'Código inválido.' });
@@ -326,6 +323,26 @@ export default function RegisterPage() {
                       otpInputs.current[idx-1].focus();
                     }
                   }}
+                  onPaste={e => {
+                    e.preventDefault();
+                    const pastedText = e.clipboardData.getData('text').trim();
+                    if (!/^\d+$/.test(pastedText)) return;
+                    
+                    const digits = pastedText.slice(0, 6).split('');
+                    const newOtp = [...otp];
+                    digits.forEach((char, i) => {
+                      if (i < 6) newOtp[i] = char;
+                    });
+                    setOtp(newOtp);
+
+                    // Focus al último dígito pegado o al siguiente disponible
+                    const nextIdx = Math.min(digits.length, 5);
+                    otpInputs.current[nextIdx].focus();
+
+                    if (newOtp.join('').length === 6) {
+                      setTimeout(() => handleVerifyOtp(null, newOtp.join('')), 100);
+                    }
+                  }}
                 />
               ))}
             </div>
@@ -347,18 +364,9 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <TerminosModal isOpen={terminosModalOpen} onClose={() => setTerminosModalOpen(false)} />
-        <PoliticaModal isOpen={politicaModalOpen} onClose={() => setPoliticaModalOpen(false)} />
-      </SignInPage>
-
-      {showWelcome && (
-        <WelcomeScreen 
-          name={form.nombre} 
-          onNext={() => window.location.href = '/onboarding'} 
-        />
-      )}
-
-      <Balloons ref={balloonsRef} />
+      <TerminosModal isOpen={terminosModalOpen} onClose={() => setTerminosModalOpen(false)} />
+      <PoliticaModal isOpen={politicaModalOpen} onClose={() => setPoliticaModalOpen(false)} />
+    </SignInPage>
     </>
   );
 }

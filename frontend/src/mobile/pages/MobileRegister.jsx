@@ -89,7 +89,12 @@ const MobileRegister = () => {
       setCountdown(60);
       setCanResend(false);
     } catch (err) {
-      addToast({ type: 'error', title: 'Error', message: err.message || 'No se pudo enviar el código.' });
+      if (err.message.includes('ya está registrado') || err.message.includes('ALREADY_REGISTERED')) {
+        setErrors(prev => ({ ...prev, email: 'Este email ya está registrado.' }));
+        addToast({ type: 'warning', title: 'Cuenta existente', message: 'Este email ya está registrado. Podés iniciar sesión.' });
+      } else {
+        addToast({ type: 'error', title: 'Error', message: err.message || 'No se pudo enviar el código.' });
+      }
     } finally {
       setLoading(false);
     }
@@ -284,6 +289,25 @@ const MobileRegister = () => {
                       onChange={e => handleOtpChange(idx, e.target.value)}
                       onKeyDown={e => {
                         if (e.key === 'Backspace' && !otp[idx] && idx > 0) otpInputs.current[idx - 1].focus();
+                      }}
+                      onPaste={e => {
+                        e.preventDefault();
+                        const pastedText = e.clipboardData.getData('text').trim();
+                        if (!/^\d+$/.test(pastedText)) return;
+                        
+                        const digits = pastedText.slice(0, 6).split('');
+                        const newOtp = [...otp];
+                        digits.forEach((char, i) => {
+                          if (i < 6) newOtp[i] = char;
+                        });
+                        setOtp(newOtp);
+
+                        const nextIdx = Math.min(digits.length, 5);
+                        otpInputs.current[nextIdx].focus();
+
+                        if (newOtp.join('').length === 6) {
+                          setTimeout(() => handleVerifyOtp(), 100);
+                        }
                       }}
                       className={cn(
                         "w-full h-18 bg-white/5 border-2 rounded-2xl text-center text-2xl font-black font-syne outline-none transition-all",
